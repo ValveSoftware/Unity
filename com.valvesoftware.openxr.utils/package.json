@@ -1,0 +1,29 @@
+{
+  "name": "com.valvesoftware.openxr.utils",
+  "displayName": "Valve OpenXR Utilities",
+  "version": "1.0.0",
+  "description": "The Valve OpenXR Utilities package provides support for OpenXR projects and their access to Unity's OpenXR functionality.",
+  "dependencies": {
+    "com.unity.xr.openxr": "1.10.0",
+    "com.unity.inputsystem": "1.7.0"
+  },
+  "keywords": [
+    "xr",
+    "openxr",
+    "valve"
+  ],
+  "licensesUrl": "https://github.com/ValveSoftware/Unity/blob/main/LICENSE.md",
+  "documentationUrl": "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md",
+  "changelogUrl": "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/CHANGELOG.md",
+  "author": {
+    "name": "Valve Software",
+    "url": "https://valvesoftware.com"
+  },
+  "samples": [
+    {
+      "displayName": "Refresh Rate",
+      "description": "Demonstrates how to request an OpenXR instance procedure and query the current refresh rate.",
+      "path": "Samples~/RefreshRate"
+    }
+  ]
+}
