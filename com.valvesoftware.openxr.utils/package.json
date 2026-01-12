@@ -1,7 +1,7 @@
 {
   "name": "com.valvesoftware.openxr.utils",
   "displayName": "Valve OpenXR Utilities",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The Valve OpenXR Utilities package provides support for OpenXR projects and their access to Unity's OpenXR functionality.",
   "dependencies": {
     "com.unity.xr.openxr": "1.10.0",

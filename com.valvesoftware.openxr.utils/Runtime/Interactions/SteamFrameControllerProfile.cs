@@ -32,7 +32,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         Desc = "Allows for mapping input to the Steam Frame Controller interaction profile.",
         DocumentationLink = "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md#interaction-profiles",
         OpenxrExtensionStrings = "XR_VALVE_frame_controller_interaction",
-        Version = "0.0.2",
+        Version = "0.0.3",
         Category = UnityEditor.XR.OpenXR.Features.FeatureCategory.Interaction,
         FeatureId = featureId)]
 #endif
@@ -287,7 +287,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// <summary>
         /// The interaction profile string used to reference Steam Frame Controller.
         /// </summary>
-        public const string profile = "/interaction_profiles/valve/frame_controller"; 
+        public const string profile = "/interaction_profiles/valve/frame_controller_valve"; 
 
         // Available Bindings
         // Left Hand Only
