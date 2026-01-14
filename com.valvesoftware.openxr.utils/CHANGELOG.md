@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2026-01-14
+### Fixed
+- Fixed app permissions preventing gaze-based foveated rendering from being enabled.
+
 ## [1.0.1] - 2026-01-12
 ### Updating Frame Controller Interaction Path
 ### Added
