@@ -154,10 +154,10 @@ namespace Valve.OpenXR.Utils
 #else
                 NativeMethods.MetaSetFoveationEyeTracked(_xrSession, value);
 #endif
-#endif                
+#endif
             }
         }
-        
+
         public bool GetFoveationEyeTrackedCenter(ref Vector2 leftEye, ref Vector2 rightEye)
         {
             if (_xrGetFoveationEyeTrackedStateMETA == null)
@@ -169,7 +169,7 @@ namespace Valve.OpenXR.Utils
             {
                 return false;
             }
-            
+
             XrFoveationEyeTrackedStateMETA eyeTrackedState = new XrFoveationEyeTrackedStateMETA{type = XrStructureType.XR_TYPE_FOVEATION_EYE_TRACKED_STATE_META};
             XrResult result = _xrGetFoveationEyeTrackedStateMETA(_xrSession, ref eyeTrackedState);
 
@@ -182,7 +182,7 @@ namespace Valve.OpenXR.Utils
             rightEye.Set(eyeTrackedState.foveationCenter[1].X, eyeTrackedState.foveationCenter[1].Y);
             return true;
         }
-        
+
 #if UNITY_EDITOR
         protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> results, BuildTargetGroup target)
         {
@@ -238,14 +238,17 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Enable Unity's Foveated Rendering feature"
             });
 #endif
-        }        
-#endif        
+        }
+#endif
 
         protected override void OnSessionCreate(ulong xrSession)
         {
             _xrSession = xrSession;
+
+            // Work around for Lepton not knowing about eye-tracking related permissions.
+            NativeMethods.Internal_SetHasEyeTrackingPermissions(true);
         }
-        
+
         protected override void OnSessionStateChange(int oldState, int newState)
         {
             if (oldState == (int)XrSessionState.XR_SESSION_STATE_VISIBLE &&
@@ -258,7 +261,7 @@ namespace Valve.OpenXR.Utils
                 }
             }
         }
-        
+
         #region OpenXR Plugin DLL Imports and Dependencies
 
         internal static class NativeMethods
@@ -277,8 +280,11 @@ namespace Valve.OpenXR.Utils
 
             [DllImport("UnityOpenXR", EntryPoint = "MetaGetFoveationEyeTracked")]
             internal static extern void MetaGetFoveationEyeTracked(out bool isEyeTracked);
+
+            [DllImport("UnityOpenXR", EntryPoint = "OculusFoveation_SetHasEyeTrackingPermissions")]
+            internal static extern void Internal_SetHasEyeTrackingPermissions([MarshalAs(UnmanagedType.I1)] bool value);
         }
-        
+
         [StructLayout(LayoutKind.Sequential)]
         private struct XrFoveationEyeTrackedStateMETA
         {
@@ -288,7 +294,7 @@ namespace Valve.OpenXR.Utils
             public XrVector2f[] foveationCenter;
             public XrFoveationEyeTrackedStateFlagsMETA flags;
         }
-        
+
         [Flags]
         private enum XrFoveationEyeTrackedStateFlagsMETA
         {
@@ -296,7 +302,7 @@ namespace Valve.OpenXR.Utils
         }
         
         #endregion
-        
+
 #if UNITY_EDITOR
         internal class ValveOpenXRFoveatedRenderingFeatureEditorWindow : EditorWindow
         {
@@ -332,7 +338,7 @@ namespace Valve.OpenXR.Utils
         XR_SESSION_STATE_EXITING = 8,
         XR_SESSION_STATE_MAX_ENUM = 0x7FFFFFFF
     }
-    
+
     internal enum FoveatedRenderingLevel
     {
         Off = 0,
