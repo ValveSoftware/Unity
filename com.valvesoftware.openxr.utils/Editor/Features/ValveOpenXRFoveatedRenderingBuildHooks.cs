@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using Unity.XR.Management.AndroidManifest.Editor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.XR.OpenXR.Features;
-using UnityEngine.XR.OpenXR;
 
 namespace Valve.OpenXR.Utils.Editor
 {

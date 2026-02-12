@@ -31,11 +31,12 @@ namespace Valve.OpenXR.Utils.Editor
             EditorGUILayout.PropertyField(lateLatchingModeProp, s_lateLatchingModeLabel);
             EditorGUILayout.PropertyField(lateLatchingDebugProp, s_lateLatchingDebugLabel);
             EditorGUIUtility.labelWidth = 0.0f;
+
             serializedObject.ApplyModifiedProperties();
             
             OpenXRSettings androidOpenXRSettings = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
             var serializedOpenXrSettings = new SerializedObject(androidOpenXRSettings);
-            androidOpenXRSettings.optimizeBufferDiscards = optimizeBufferDiscardsProp.boolValue;
+            ((ValveOpenXRSupportFeature)target).ApplySettingsOverride(androidOpenXRSettings);
             serializedOpenXrSettings.ApplyModifiedProperties();
         }
     }

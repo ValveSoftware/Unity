@@ -44,6 +44,17 @@ git@github.com:ValveSoftware/Unity.git?path=com.valvesoftware.openxr.utils
 | :--- | :--- |
 | **Steam Frame Controller** | Interaction profile for Steam Frame controllers. |
 
+## Samples
+
+| **Name** | **Description** | **Requirements**
+| :--- | :--- | :--- |
+| **Refresh Rate** | Queries and displays the current display refresh rate. | Valve Utils Refresh Rate OpenXR Feature  |
+| **System Info** | Queries whether the device is Steam Frame using OpenXR's system info. | Unity 2022.3, Unity OpenXR Plugin v1.9.1  |
+
+## Limitations
+
+* Foveated rendering on Steam Frame under Unity 2022.3 may not render correctly when MSAA is enabled.
+
 ## Support
 
 For bugs or features requests, open up a new issue if you don't see it addressed in the existing / closed issues.

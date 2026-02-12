@@ -1,12 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using UnityEngine;
 using UnityEngine.XR.OpenXR.Features;
 using UnityEngine.XR.OpenXR.Features.MetaQuestSupport;
 using UnityEngine.XR.OpenXR;
-using UnityEngine.XR.OpenXR.NativeTypes;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.XR.OpenXR.Features;
@@ -37,6 +32,8 @@ namespace Valve.OpenXR.Utils
 #if UNITY_EDITOR
         protected override void GetValidationChecks(List<ValidationRule> rules, BuildTargetGroup targetGroup)
         {
+            base.GetValidationChecks(rules, targetGroup);
+
             var highestMinAndroidApiLevel = AndroidSdkVersions.AndroidApiLevel30;
             rules.Add(new ValidationRule(this)
             {
