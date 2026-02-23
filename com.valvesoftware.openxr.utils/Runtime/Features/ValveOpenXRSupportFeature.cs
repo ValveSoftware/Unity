@@ -147,6 +147,12 @@ namespace Valve.OpenXR.Utils
         
         
 #if UNITY_EDITOR
+        
+        internal void ApplySettingsOverride(OpenXRSettings openXrSettings)
+        {
+            openXrSettings.optimizeBufferDiscards = optimizeBufferDiscards;
+        }
+        
         protected override void GetValidationChecks(List<ValidationRule> rules, BuildTargetGroup targetGroup)
         {
             rules.Add(new ValidationRule(this)

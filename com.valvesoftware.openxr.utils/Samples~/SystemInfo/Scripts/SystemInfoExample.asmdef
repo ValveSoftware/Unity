@@ -1,0 +1,17 @@
+{
+    "name": "SystemInfoExample",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4920cda478a7ad9418e70a29fd7c1eae",
+        "GUID:4847341ff46394e83bb78fbd0652937e"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

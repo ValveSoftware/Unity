@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.3] - 2026-02-12
+### Added
+- System info sample for checking device is Steam Frame
+- Minor fixes/additions to documentation and OpenXR feature validation rules.
+
 ## [1.0.2] - 2026-01-14
 ### Fixed
 - Fixed app permissions preventing gaze-based foveated rendering from being enabled.

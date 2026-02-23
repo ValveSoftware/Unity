@@ -1,7 +1,7 @@
 {
   "name": "com.valvesoftware.openxr.utils",
   "displayName": "Valve OpenXR Utilities",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "The Valve OpenXR Utilities package provides support for OpenXR projects and their access to Unity's OpenXR functionality.",
   "dependencies": {
     "com.unity.xr.openxr": "1.10.0",
@@ -24,6 +24,11 @@
       "displayName": "Refresh Rate",
       "description": "Demonstrates how to request an OpenXR instance procedure and query the current refresh rate.",
       "path": "Samples~/RefreshRate"
+    },
+    {
+      "displayName": "System Info",
+      "description": "Demonstrates how to request the headset name from OpenXR and verify the app is running on Steam Frame.",
+      "path": "Samples~/SystemInfo"
     }
   ]
 }

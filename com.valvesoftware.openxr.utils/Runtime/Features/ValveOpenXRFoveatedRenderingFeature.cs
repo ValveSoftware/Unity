@@ -184,9 +184,11 @@ namespace Valve.OpenXR.Utils
         }
 
 #if UNITY_EDITOR
-        protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> results, BuildTargetGroup target)
+        protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> rules, BuildTargetGroup targetGroup)
         {
-            results.Add(new ValidationRule(this)
+            base.GetValidationChecks(rules, targetGroup);
+
+            rules.Add(new ValidationRule(this)
             {
                 message = "This feature is only supported on Vulkan graphics API.",
                 error = true,
@@ -211,14 +213,37 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Set Vulkan as Graphics API"
             });
 
+#if UNITY_2023_2_OR_NEWER
+            rules.Add(new ValidationRule(this)
+            {
+                message = "This feature requires the foveated rendering API set to SRP foveation.",
+                error = true,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings)
+                    {
+                        return settings.foveatedRenderingApi == OpenXRSettings.BackendFovationApi.SRPFoveation;
+                    }
+                    return true;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    settings.foveatedRenderingApi = OpenXRSettings.BackendFovationApi.SRPFoveation;
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Set SPR foveation as the foveated rendering API."
+            });
+#endif
 #if UNITY_6000_0_OR_NEWER
-            results.Add(new ValidationRule(this)
+            rules.Add(new ValidationRule(this)
             {
                 message = "Unity Foveated Rendering feature must be enabled.",
                 error = true,
                 checkPredicate = () =>
                 {
-                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(target);
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
                     if (settings == null)
                         return false;
 
@@ -227,7 +252,7 @@ namespace Valve.OpenXR.Utils
                 },
                 fixIt = () =>
                 {
-                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(target);
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
                     if (settings != null)
                     {
                         var foveationFeature = settings.GetFeature<FoveatedRenderingFeature>();
