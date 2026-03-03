@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-03-03
+### Added
+- OpenXR render model sample.
+
 ## [1.0.3] - 2026-02-12
 ### Added
 - System info sample for checking device is Steam Frame
