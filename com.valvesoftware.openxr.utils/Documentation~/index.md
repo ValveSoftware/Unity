@@ -50,6 +50,7 @@ git@github.com:ValveSoftware/Unity.git?path=com.valvesoftware.openxr.utils
 | :--- | :--- | :--- |
 | **Refresh Rate** | Queries and displays the current display refresh rate. | Valve Utils Refresh Rate OpenXR Feature  |
 | **System Info** | Queries whether the device is Steam Frame using OpenXR's system info. | Unity 2022.3, Unity OpenXR Plugin v1.9.1  |
+| **Render Model** | Displays the Steam Frame controller render models obtained from the OpenXR runtime. | Unity 6.0, Unity OpenXR Plugin v1.9.1  |
 
 ## Limitations
 
