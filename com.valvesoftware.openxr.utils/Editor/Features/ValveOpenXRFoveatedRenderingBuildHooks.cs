@@ -17,6 +17,7 @@ namespace Valve.OpenXR.Utils.Editor
         {
 #if !USE_LEGACY_BOOT_CONFIG
             builder.SetBootConfigValue("xr-vulkan-extension-fragment-density-map-enabled", "1");
+            builder.SetBootConfigValue("xr-hide-memoryless-render-texture", "1");
 #else
             builder.SetBootConfigValue("xr-meta-enabled", "1");
 #endif
