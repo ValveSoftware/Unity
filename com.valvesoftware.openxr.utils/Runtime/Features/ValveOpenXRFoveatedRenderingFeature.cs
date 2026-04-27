@@ -263,6 +263,34 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Enable Unity's Foveated Rendering feature"
             });
 #endif
+#if UNITY_6000_3_OR_NEWER
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Optimize Buffer Discards must be enabled.",
+                error = true,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings == null)
+                        return false;
+
+                    var supportFeature = settings.GetFeature<ValveOpenXRSupportFeature>();
+                    return supportFeature.enabled && supportFeature.optimizeBufferDiscards;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings != null)
+                    {
+                        var supportFeature = settings.GetFeature<ValveOpenXRSupportFeature>();
+                        supportFeature.enabled = true;
+                        supportFeature.optimizeBufferDiscards = true;
+                    }
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Enable Optimize Buffer Discards"
+            });
+#endif
         }
 #endif
 

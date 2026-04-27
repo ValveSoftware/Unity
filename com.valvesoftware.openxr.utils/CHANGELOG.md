@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.5] - 2026-04-27
+### Fixed
+- Fixed settings to better support foveated rendering with VK_KHR_depth_stencil_resolve
+
 ## [1.0.4] - 2026-03-03
 ### Added
 - OpenXR render model sample.
