@@ -177,6 +177,16 @@ public partial class ValveRenderModelFeature : OpenXRFeature
     }
 
 #if UNITY_EDITOR
+
+
+        protected override void OnEnabledChange()
+        {
+            base.OnEnabledChange();
+
+            // Force a refresh of the Project Validation window
+            EditorApplication.delayCall += EditorUtility.RequestScriptReload;
+        }
+        
         protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> results, BuildTargetGroup target)
         {
             const string gltfPackageName = "com.unity.cloud.gltfast";

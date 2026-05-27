@@ -124,6 +124,14 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Disable incompatible features."
             });
         }
+
+        protected override void OnEnabledChange()
+        {
+            base.OnEnabledChange();
+
+            // Force a refresh of the Project Validation window
+            EditorApplication.delayCall += EditorUtility.RequestScriptReload;
+        }
 #endif
     }
 }
