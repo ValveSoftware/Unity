@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.6] - 2026-06-30
+### Fixed
+- Render model sample - added explicit api for checking when model data is available, minor refactoring for readability.
+
 ## [1.0.5] - 2026-04-27
 ### Fixed
 - Fixed settings to better support foveated rendering with VK_KHR_depth_stencil_resolve

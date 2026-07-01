@@ -19,6 +19,11 @@ public class RenderModelLoader : MonoBehaviour
     private List<ValveRenderModelFeature.ModelNodeState> animNodeStates;
     private Coroutine modelLoadCoroutine;
     private ValveRenderModelFeature feature;
+    private float lastModelCheckTime;
+    private bool loadingComplete = false;
+
+    private bool IsLoaded() => loadingComplete;
+    private bool IsLoading() => modelLoadCoroutine != null;
     
     private void Awake()
     {
@@ -32,19 +37,29 @@ public class RenderModelLoader : MonoBehaviour
 
     private void Update()
     {
-        // Load the render model once the input device has connected.
-        if (modelLoadCoroutine == null)
-        {
-            if (IsTrackedControllerConnected(controllerHand))
-            {
-                modelLoadCoroutine = StartCoroutine(LoadModelAsync());
-            }
-            return;
-        }
-
+        TryToLoadIfNeeded();
         UpdateAnimations();
     }
-    
+
+    private void TryToLoadIfNeeded()
+    {
+        const float kRenderModelCheckInterval = 0.25f;
+        if (IsLoaded()) return;
+        if (IsLoading()) return;
+        if (!feature) return;
+        if (Time.time - lastModelCheckTime < kRenderModelCheckInterval) return;
+
+        bool ready = IsTrackedControllerConnected(controllerHand) &&
+                     feature.IsRenderModelAvailable(controllerHand == Handedness.Left);
+
+        lastModelCheckTime = Time.time;
+
+        if (ready)
+        {
+            modelLoadCoroutine = StartCoroutine(LoadModelAsync());
+        }
+    }
+   
     private IEnumerator LoadModelAsync()
     {
         // Load the binary data for the render model
@@ -114,11 +129,14 @@ public class RenderModelLoader : MonoBehaviour
                 yield break;
             }
         }
+        
+        loadingComplete = true;
     }
 
     private void UpdateAnimations()
     {
         // Get the poses from OpenXR and update the transforms of those that are visible.
+        if (!IsLoaded()) return;
         if (renderModelHandle == 0) return;
         if (animNodeStates == null) return;
     
