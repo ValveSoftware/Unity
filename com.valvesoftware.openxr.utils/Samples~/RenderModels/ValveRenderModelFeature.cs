@@ -48,6 +48,11 @@ public partial class ValveRenderModelFeature : OpenXRFeature
         public bool Visible;
     }
 
+    public bool IsRenderModelAvailable(bool isLeftHand)
+    {
+        return GetRenderModelId(isLeftHand) != 0;
+    }
+
     public bool GetRenderModelAssetData(
         bool isLeftHand,
         out ulong renderModelHandle,
@@ -60,12 +65,10 @@ public partial class ValveRenderModelFeature : OpenXRFeature
         animatableNodeNames = null;
         renderModelAssetBytes = null;
 
-        // Enumerate the render models and search for one with the desired model path
-        var modelPath = $"/user/hand/{(isLeftHand ? "left" : "right")}";
-        XrRenderModelIdEXT renderModelId = FindRenderModelByPath(modelPath);
+        XrRenderModelIdEXT renderModelId = GetRenderModelId(isLeftHand);
         if (renderModelId == 0)
         {
-            Debug.LogError($"No render model found for path: {modelPath}");
+            Debug.LogError($"No render model available for {(isLeftHand ? "left" : "right")} hand");
             return false;
         }
         
@@ -248,6 +251,13 @@ public partial class ValveRenderModelFeature : OpenXRFeature
     
 #endregion
 
+    private XrRenderModelIdEXT GetRenderModelId(bool isLeftHand)
+    {
+        // Enumerate the render models and search for one with the desired model path
+        var modelPath = $"/user/hand/{(isLeftHand ? "left" : "right")}";
+        return FindRenderModelByPath(modelPath);
+    }
+    
     private ulong RenderModelIdToHandle(ulong session, XrRenderModelIdEXT modelId)
     {
         var createInfo = new XrRenderModelCreateInfoEXT
@@ -395,7 +405,7 @@ public partial class ValveRenderModelFeature : OpenXRFeature
             }
         }
 
-        Debug.LogWarning("[RenderModelLoader] No render models found.");
+        Debug.LogWarning($"[RenderModelLoader] No render models currently available for {path}");
         return 0;
     }
 
