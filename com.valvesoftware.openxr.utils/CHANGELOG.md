@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.7] - 2026-07-24
+### Added
+- Added project validation warnings if settings that potentially interfere with foveated rendering are enabled.
+
 ## [1.0.6] - 2026-06-30
 ### Fixed
 - Render model sample - added explicit api for checking when model data is available, minor refactoring for readability.

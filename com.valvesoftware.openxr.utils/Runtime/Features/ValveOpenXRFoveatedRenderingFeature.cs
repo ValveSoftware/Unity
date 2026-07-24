@@ -291,6 +291,45 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Enable Optimize Buffer Discards"
             });
 #endif
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Depth submission may cause issues with Foveated Rendering.",
+                error = false,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings == null)
+                        return false;
+
+                    return settings.depthSubmissionMode == OpenXRSettings.DepthSubmissionMode.None;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings != null)
+                    {
+                        settings.depthSubmissionMode = OpenXRSettings.DepthSubmissionMode.None;
+                    }
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Disable Depth Submission Mode"
+            });
+
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Graphics Jobs may cause issues with Foveated Rendering.",
+                error = false,
+                checkPredicate = () =>
+                {
+                    return PlayerSettings.graphicsJobs == false;
+                },
+                fixIt = () =>
+                {
+                    PlayerSettings.graphicsJobs = false;
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Disable Graphics Jobs"
+            });
         }
 #endif
 
