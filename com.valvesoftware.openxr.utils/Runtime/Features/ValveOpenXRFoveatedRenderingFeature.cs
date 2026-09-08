@@ -154,10 +154,10 @@ namespace Valve.OpenXR.Utils
 #else
                 NativeMethods.MetaSetFoveationEyeTracked(_xrSession, value);
 #endif
-#endif                
+#endif
             }
         }
-        
+
         public bool GetFoveationEyeTrackedCenter(ref Vector2 leftEye, ref Vector2 rightEye)
         {
             if (_xrGetFoveationEyeTrackedStateMETA == null)
@@ -169,7 +169,7 @@ namespace Valve.OpenXR.Utils
             {
                 return false;
             }
-            
+
             XrFoveationEyeTrackedStateMETA eyeTrackedState = new XrFoveationEyeTrackedStateMETA{type = XrStructureType.XR_TYPE_FOVEATION_EYE_TRACKED_STATE_META};
             XrResult result = _xrGetFoveationEyeTrackedStateMETA(_xrSession, ref eyeTrackedState);
 
@@ -182,11 +182,13 @@ namespace Valve.OpenXR.Utils
             rightEye.Set(eyeTrackedState.foveationCenter[1].X, eyeTrackedState.foveationCenter[1].Y);
             return true;
         }
-        
+
 #if UNITY_EDITOR
-        protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> results, BuildTargetGroup target)
+        protected override void GetValidationChecks(List<OpenXRFeature.ValidationRule> rules, BuildTargetGroup targetGroup)
         {
-            results.Add(new ValidationRule(this)
+            base.GetValidationChecks(rules, targetGroup);
+
+            rules.Add(new ValidationRule(this)
             {
                 message = "This feature is only supported on Vulkan graphics API.",
                 error = true,
@@ -211,14 +213,37 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Set Vulkan as Graphics API"
             });
 
+#if UNITY_2023_2_OR_NEWER
+            rules.Add(new ValidationRule(this)
+            {
+                message = "This feature requires the foveated rendering API set to SRP foveation.",
+                error = true,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings)
+                    {
+                        return settings.foveatedRenderingApi == OpenXRSettings.BackendFovationApi.SRPFoveation;
+                    }
+                    return true;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    settings.foveatedRenderingApi = OpenXRSettings.BackendFovationApi.SRPFoveation;
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Set SPR foveation as the foveated rendering API."
+            });
+#endif
 #if UNITY_6000_0_OR_NEWER
-            results.Add(new ValidationRule(this)
+            rules.Add(new ValidationRule(this)
             {
                 message = "Unity Foveated Rendering feature must be enabled.",
                 error = true,
                 checkPredicate = () =>
                 {
-                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(target);
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
                     if (settings == null)
                         return false;
 
@@ -227,7 +252,7 @@ namespace Valve.OpenXR.Utils
                 },
                 fixIt = () =>
                 {
-                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(target);
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
                     if (settings != null)
                     {
                         var foveationFeature = settings.GetFeature<FoveatedRenderingFeature>();
@@ -238,14 +263,84 @@ namespace Valve.OpenXR.Utils
                 fixItMessage = "Enable Unity's Foveated Rendering feature"
             });
 #endif
-        }        
-#endif        
+#if UNITY_6000_3_OR_NEWER
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Optimize Buffer Discards must be enabled.",
+                error = true,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings == null)
+                        return false;
+
+                    var supportFeature = settings.GetFeature<ValveOpenXRSupportFeature>();
+                    return supportFeature.enabled && supportFeature.optimizeBufferDiscards;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings != null)
+                    {
+                        var supportFeature = settings.GetFeature<ValveOpenXRSupportFeature>();
+                        supportFeature.enabled = true;
+                        supportFeature.optimizeBufferDiscards = true;
+                    }
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Enable Optimize Buffer Discards"
+            });
+#endif
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Depth submission may cause issues with Foveated Rendering.",
+                error = false,
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings == null)
+                        return false;
+
+                    return settings.depthSubmissionMode == OpenXRSettings.DepthSubmissionMode.None;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings != null)
+                    {
+                        settings.depthSubmissionMode = OpenXRSettings.DepthSubmissionMode.None;
+                    }
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Disable Depth Submission Mode"
+            });
+
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Graphics Jobs may cause issues with Foveated Rendering.",
+                error = false,
+                checkPredicate = () =>
+                {
+                    return PlayerSettings.graphicsJobs == false;
+                },
+                fixIt = () =>
+                {
+                    PlayerSettings.graphicsJobs = false;
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Disable Graphics Jobs"
+            });
+        }
+#endif
 
         protected override void OnSessionCreate(ulong xrSession)
         {
             _xrSession = xrSession;
+
+            // Work around for Lepton not knowing about eye-tracking related permissions.
+            NativeMethods.Internal_SetHasEyeTrackingPermissions(true);
         }
-        
+
         protected override void OnSessionStateChange(int oldState, int newState)
         {
             if (oldState == (int)XrSessionState.XR_SESSION_STATE_VISIBLE &&
@@ -258,7 +353,7 @@ namespace Valve.OpenXR.Utils
                 }
             }
         }
-        
+
         #region OpenXR Plugin DLL Imports and Dependencies
 
         internal static class NativeMethods
@@ -277,8 +372,11 @@ namespace Valve.OpenXR.Utils
 
             [DllImport("UnityOpenXR", EntryPoint = "MetaGetFoveationEyeTracked")]
             internal static extern void MetaGetFoveationEyeTracked(out bool isEyeTracked);
+
+            [DllImport("UnityOpenXR", EntryPoint = "OculusFoveation_SetHasEyeTrackingPermissions")]
+            internal static extern void Internal_SetHasEyeTrackingPermissions([MarshalAs(UnmanagedType.I1)] bool value);
         }
-        
+
         [StructLayout(LayoutKind.Sequential)]
         private struct XrFoveationEyeTrackedStateMETA
         {
@@ -288,7 +386,7 @@ namespace Valve.OpenXR.Utils
             public XrVector2f[] foveationCenter;
             public XrFoveationEyeTrackedStateFlagsMETA flags;
         }
-        
+
         [Flags]
         private enum XrFoveationEyeTrackedStateFlagsMETA
         {
@@ -296,7 +394,7 @@ namespace Valve.OpenXR.Utils
         }
         
         #endregion
-        
+
 #if UNITY_EDITOR
         internal class ValveOpenXRFoveatedRenderingFeatureEditorWindow : EditorWindow
         {
@@ -332,7 +430,7 @@ namespace Valve.OpenXR.Utils
         XR_SESSION_STATE_EXITING = 8,
         XR_SESSION_STATE_MAX_ENUM = 0x7FFFFFFF
     }
-    
+
     internal enum FoveatedRenderingLevel
     {
         Off = 0,

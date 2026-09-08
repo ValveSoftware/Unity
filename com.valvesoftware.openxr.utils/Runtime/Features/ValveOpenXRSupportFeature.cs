@@ -24,7 +24,7 @@ namespace Valve.OpenXR.Utils
         DocumentationLink = "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md#open-xr-features",
         OpenxrExtensionStrings = "",
         Version = "0.1.0",
-        BuildTargetGroups = new[] { BuildTargetGroup.Android },
+        BuildTargetGroups = new[] { BuildTargetGroup.Standalone, BuildTargetGroup.Android },
         FeatureId = featureId
     )]
 #endif
@@ -147,8 +147,17 @@ namespace Valve.OpenXR.Utils
         
         
 #if UNITY_EDITOR
+        
+        internal void ApplySettingsOverride(OpenXRSettings openXrSettings)
+        {
+#if UNITY_ANDROID
+            openXrSettings.optimizeBufferDiscards = optimizeBufferDiscards;
+#endif
+        }
+        
         protected override void GetValidationChecks(List<ValidationRule> rules, BuildTargetGroup targetGroup)
         {
+#if UNITY_ANDROID
             rules.Add(new ValidationRule(this)
             {
                 message = "Late latching is only supported on Vulkan graphics API.",
@@ -161,6 +170,7 @@ namespace Valve.OpenXR.Utils
                 fixItAutomatic = true,
                 fixItMessage = "Set Vulkan as Graphics API"
             });
+#endif
         }
 #endif
     }

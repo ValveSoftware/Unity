@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.0.7] - 2026-07-24
+### Added
+- Added project validation warnings if settings that potentially interfere with foveated rendering are enabled.
+
+## [1.0.6] - 2026-06-30
+### Fixed
+- Render model sample - added explicit api for checking when model data is available, minor refactoring for readability.
+
+## [1.0.5] - 2026-04-27
+### Fixed
+- Fixed settings to better support foveated rendering with VK_KHR_depth_stencil_resolve
+
+## [1.0.4] - 2026-03-03
+### Added
+- OpenXR render model sample.
+
+## [1.0.3] - 2026-02-12
+### Added
+- System info sample for checking device is Steam Frame
+- Minor fixes/additions to documentation and OpenXR feature validation rules.
+
+## [1.0.2] - 2026-01-14
+### Fixed
+- Fixed app permissions preventing gaze-based foveated rendering from being enabled.
+
 ## [1.0.1] - 2026-01-12
 ### Updating Frame Controller Interaction Path
 ### Added

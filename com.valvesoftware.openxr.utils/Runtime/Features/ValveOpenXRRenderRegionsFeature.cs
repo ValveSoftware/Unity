@@ -1,5 +1,5 @@
-
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -103,144 +103,146 @@ namespace Valve.OpenXR.Utils
             return true;
         }
 
-
-        private ValidationRule[] CreateValidationRules(BuildTargetGroup targetGroup) =>
-
-            new ValidationRule[]
-            {
-                    // OptimizeMultiviewRenderRegions (aka MVPVV) only supported on Unity 6.1 onwards
+        internal void ApplySettingsOverride(OpenXRSettings openXrSettings)
+        {
+            openXrSettings.symmetricProjection = symmetricProjection;
 #if UNITY_6000_1_OR_NEWER
-                    new ValidationRule(this)
-                    {
-                        message = "Multiview Render Regions Optimizations Mode requires symmetric projection setting turned on.",
-                        checkPredicate = () =>
-                        {
-                            if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
-                            {
-                                return symmetricProjection;
-                            }
-                            return true;
-                        },
-                        error = true,
-                        fixIt = () =>
-                        {
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            var feature = settings.GetFeature<ValveOpenXRRenderRegionsFeature>();
-                            feature.symmetricProjection = true;
-                        }
-                    },
-
-                    new ValidationRule(this)
-                    {
-                        message = "Multiview Render Regions Optimizations Mode requires Render Mode set to \"Single Pass Instanced / Multi-view\".",
-                        checkPredicate = () =>
-                        {
-                            if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
-                            {
-                                var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                                return (settings.renderMode == OpenXRSettings.RenderMode.SinglePassInstanced);
-                            }
-                            return true;
-                        },
-                        error = true,
-                        fixIt = () =>
-                        {
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            settings.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
-                        }
-                    },
-
-                    new ValidationRule(this)
-                    {
-                        message = "Multiview Render Regions Optimizations Mode needs the Vulkan Graphics API to be the default Graphics API to work at runtime.",
-                        helpText = "The Multiview Render Regions Optimizations Mode feature only works with the Vulkan Graphics API, which needs to be set as the first Graphics API to be loaded at application startup. Choosing other Graphics API may require to switch to Vulkan and restart the application.",
-                        checkPredicate = () =>
-                        {
-                            if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
-                            {
-                                var graphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
-                                return graphicsApis[0] == GraphicsDeviceType.Vulkan;
-                            }
-                            return true;
-                        },
-                        error = false
-                    },
-
-                    new ValidationRule(this)
-                    {
-                        message = "Multiview Render Regions Optimizations - All Passes mode is only supported on Unity 6.2+ versions",
-                        checkPredicate = () =>
-                        {
-#if !UNITY_6000_2_OR_NEWER
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            if (settings.multiviewRenderRegionsOptimizationMode == OpenXRSettings.MultiviewRenderRegionsOptimizationMode.AllPasses)
-                                return false;
+            openXrSettings.multiviewRenderRegionsOptimizationMode = multiviewRenderRegionsOptimizationMode;
 #endif
-                            return true;
-                        },
-                        error = true,
-                        fixIt = () =>
-                        {
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            var feature = settings.GetFeature<ValveOpenXRRenderRegionsFeature>();
-                            feature.multiviewRenderRegionsOptimizationMode = OpenXRSettings.MultiviewRenderRegionsOptimizationMode.FinalPass;
-                        },
-                        fixItAutomatic = true,
-                        fixItMessage = "Set Multiview Render Regions Optimization Mode to Final Pass."
-                    },
+        }
 
+        protected override void GetValidationChecks(List<ValidationRule> rules, BuildTargetGroup targetGroup)
+        {
+            base.GetValidationChecks(rules, targetGroup);
+            
+#if UNITY_6000_1_OR_NEWER
+            rules.Add(new ValidationRule(this)
+            {
+                // OptimizeMultiviewRenderRegions (aka MVPVV) only supported on Unity 6.1 onwards
+                message = "Multiview Render Regions Optimizations Mode requires symmetric projection setting turned on.",
+                checkPredicate = () =>
+                {
+                    if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
+                    {
+                        return symmetricProjection;
+                    }
+                    return true;
+                },
+                error = true,
+                fixIt = () =>
+                {
+                    symmetricProjection = true;
+                }
+            });
+
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Multiview Render Regions Optimizations Mode requires Render Mode set to \"Single Pass Instanced / Multi-view\".",
+                checkPredicate = () =>
+                {
+                    if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
+                    {
+                        var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                        return (settings.renderMode == OpenXRSettings.RenderMode.SinglePassInstanced);
+                    }
+                    return true;
+                },
+                error = true,
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    settings.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
+                }
+            });
+
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Multiview Render Regions Optimizations Mode needs the Vulkan Graphics API to be the default Graphics API to work at runtime.",
+                helpText = "The Multiview Render Regions Optimizations Mode feature only works with the Vulkan Graphics API, which needs to be set as the first Graphics API to be loaded at application startup. Choosing other Graphics API may require to switch to Vulkan and restart the application.",
+                checkPredicate = () =>
+                {
+                    if (multiviewRenderRegionsOptimizationMode != OpenXRSettings.MultiviewRenderRegionsOptimizationMode.None)
+                    {
+                        var graphicsApis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+                        return graphicsApis[0] == GraphicsDeviceType.Vulkan;
+                    }
+                    return true;
+                },
+                error = false
+            });
+
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Multiview Render Regions Optimizations - All Passes mode is only supported on Unity 6.2+ versions",
+                checkPredicate = () =>
+                {
+#if !UNITY_6000_2_OR_NEWER
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (settings.multiviewRenderRegionsOptimizationMode == OpenXRSettings.MultiviewRenderRegionsOptimizationMode.AllPasses)
+                        return false;
+#endif
+                    return true;
+                },
+                error = true,
+                fixIt = () =>
+                {
+                    multiviewRenderRegionsOptimizationMode = OpenXRSettings.MultiviewRenderRegionsOptimizationMode.FinalPass;
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Set Multiview Render Regions Optimization Mode to Final Pass."
+            });
 #endif
 
 #if UNITY_ANDROID
-                    new ValidationRule(this)
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Symmetric Projection is only supported on Vulkan graphics API",
+                checkPredicate = () =>
+                {
+                    if (symmetricProjection && !SettingsUseVulkan())
                     {
-                        message = "Symmetric Projection is only supported on Vulkan graphics API",
-                        checkPredicate = () =>
-                        {
-                            if (symmetricProjection && !SettingsUseVulkan())
-                            {
-                                return false;
-                            }
-                            return true;
-                        },
-                        fixIt = () =>
-                        {
-                            PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
-                        },
-                        fixItAutomatic = true,
-                        fixItMessage = "Set Vulkan as Graphics API"
-                    },
+                        return false;
+                    }
+                    return true;
+                },
+                fixIt = () =>
+                {
+                    PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
+                },
+                fixItAutomatic = true,
+                fixItMessage = "Set Vulkan as Graphics API"
+            });
 
-                    new ValidationRule(this)
+            rules.Add(new ValidationRule(this)
+            {
+                message = "Symmetric Projection is only supported when using Multi-view",
+                checkPredicate = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (null == settings)
+                        return false;
+
+                    if (symmetricProjection && (settings.renderMode != OpenXRSettings.RenderMode.SinglePassInstanced))
                     {
-                        message = "Symmetric Projection is only supported when using Multi-view",
-                        checkPredicate = () =>
-                        {
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            if (null == settings)
-                                return false;
-
-                            if (symmetricProjection && (settings.renderMode != OpenXRSettings.RenderMode.SinglePassInstanced))
-                            {
-                                return false;
-                            }
-                            return true;
-                        },
-                        fixIt = () =>
-                        {
-                            var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
-                            if (null != settings)
-                            {
-                                settings.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
-                            }
-                        },
-                        error = true,
-                        fixItAutomatic = true,
-                        fixItMessage = "Set Render Mode to Multi-view"
-                    },
+                        return false;
+                    }
+                    return true;
+                },
+                fixIt = () =>
+                {
+                    var settings = OpenXRSettings.GetSettingsForBuildTargetGroup(targetGroup);
+                    if (null != settings)
+                    {
+                        settings.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
+                    }
+                },
+                error = true,
+                fixItAutomatic = true,
+                fixItMessage = "Set Render Mode to Multi-view"
+            });
 
 #endif
-            };
+        }
 
         internal class ValveOpenXRRenderRegionsFeatureEditorWindow : EditorWindow
         {

@@ -46,14 +46,8 @@ namespace Valve.OpenXR.Utils.Editor
 
             OpenXRSettings androidOpenXRSettings = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
             var serializedOpenXrSettings = new SerializedObject(androidOpenXRSettings);
-
-            androidOpenXRSettings.symmetricProjection = symmetricProjection.boolValue;
-#if UNITY_6000_1_OR_NEWER
-            androidOpenXRSettings.multiviewRenderRegionsOptimizationMode = (OpenXRSettings.MultiviewRenderRegionsOptimizationMode)multiviewRenderRegionsOptimizationMode.intValue;
-#endif
+            ((ValveOpenXRRenderRegionsFeature)target).ApplySettingsOverride(androidOpenXRSettings);
             serializedOpenXrSettings.ApplyModifiedProperties();
-
-            EditorGUIUtility.labelWidth = 0.0f;
         }
     }
 }

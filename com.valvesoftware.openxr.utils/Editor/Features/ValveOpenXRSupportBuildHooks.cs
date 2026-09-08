@@ -1,7 +1,9 @@
 using System;
+using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.XR.OpenXR.Features;
 using UnityEngine;
+using UnityEngine.XR.OpenXR;
 
 namespace Valve.OpenXR.Utils.Editor
 {
@@ -15,7 +17,11 @@ namespace Valve.OpenXR.Utils.Editor
 
         protected override void OnPostGenerateGradleAndroidProjectExt(string path) {}
         protected override void OnPostprocessBuildExt(BuildReport report) {}
-        protected override void OnPreprocessBuildExt(BuildReport report) {}
+
+        protected override void OnPreprocessBuildExt(BuildReport report)
+        {
+            ApplySettingsOverride();
+        }
 
         protected override void OnProcessBootConfigExt(BuildReport report, BootConfigBuilder builder)
         {
@@ -28,6 +34,14 @@ namespace Valve.OpenXR.Utils.Editor
 
             builder.SetBootConfigValue(kLateLatchingSupported, item.lateLatchingMode ? "1" : "0");
             builder.SetBootConfigValue(kLateLatchingDebug, item.lateLatchingDebug ? "1" : "0");
+        }
+
+        private void ApplySettingsOverride()
+        {
+            var openXrSettings = OpenXRSettings.GetSettingsForBuildTargetGroup(BuildTargetGroup.Android);
+            var target = EditorUtils.GetFeatureAsset<ValveOpenXRSupportFeature>();
+            target.ApplySettingsOverride(openXrSettings);
+            AssetDatabase.SaveAssetIfDirty(openXrSettings);
         }
     }
 }

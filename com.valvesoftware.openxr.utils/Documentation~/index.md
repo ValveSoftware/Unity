@@ -33,7 +33,7 @@ git@github.com:ValveSoftware/Unity.git?path=com.valvesoftware.openxr.utils
 | **Name** | **Description** | **Requirements**
 | :--- | :--- | :--- |
 | **Settings for Unity's Rendering** | OpenXR rendering settings | Unity 2022.3, Unity OpenXR Plugin v1.9.1 |
-| **Settings for Unity's Foveated Rendering** | Settings for enabling foveated rendering on startup. | Unity 2022.3, Unity OpenXR Plugin v1.9.1, Vulkan, URP |
+| **Settings for Unity's Foveated Rendering** | Settings for enabling foveated rendering on startup. | Unity 2022.3, Unity OpenXR Plugin v1.13.0, Vulkan, URP |
 | **Settings for Unity's Render Regions** | Settings for symmetric projection and per-view viewports and render areas. | Unity 6.1, Unity OpenXR Plugin v1.14.1, Vulkan, Multi-view |
 | **Lepton Validation** | Project validation rules for Lepton-enabled projects | Unity 2022.3 |
 | **Refresh Rate** | Access to the OpenXR refresh rate display extension. | Unity 2022.3, Unity OpenXR Plugin v1.9.1  |
@@ -43,6 +43,18 @@ git@github.com:ValveSoftware/Unity.git?path=com.valvesoftware.openxr.utils
 | **Name** | **Description** |
 | :--- | :--- |
 | **Steam Frame Controller** | Interaction profile for Steam Frame controllers. |
+
+## Samples
+
+| **Name** | **Description** | **Requirements**
+| :--- | :--- | :--- |
+| **Refresh Rate** | Queries and displays the current display refresh rate. | Valve Utils Refresh Rate OpenXR Feature  |
+| **System Info** | Queries whether the device is Steam Frame using OpenXR's system info. | Unity 2022.3, Unity OpenXR Plugin v1.9.1  |
+| **Render Model** | Displays the Steam Frame controller render models obtained from the OpenXR runtime. | Unity 6.0, Unity OpenXR Plugin v1.9.1  |
+
+## Limitations
+
+* Foveated rendering on Steam Frame under Unity 2022.3 may not render correctly when MSAA is enabled.
 
 ## Support
 

@@ -1,0 +1,23 @@
+{
+    "name": "Valve.OpenXR.Utils.Samples.RenderModels",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4847341ff46394e83bb78fbd0652937e",
+        "GUID:a42927d1d4a3b4cda9b076a7adecb9cc"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.cloud.gltfast",
+            "expression": "6",
+            "define": "UNITY_GLTFAST"
+        }
+    ],
+    "noEngineReferences": false
+}
