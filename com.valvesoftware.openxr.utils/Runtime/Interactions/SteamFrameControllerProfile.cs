@@ -3,6 +3,9 @@ using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.Layouts;
 using UnityEngine.InputSystem.XR;
 using UnityEngine.Scripting;
+using UnityEngine.Scripting.APIUpdating;
+using UnityEngine.XR;
+using UnityEngine.XR.OpenXR.Features;
 using UnityEngine.XR.OpenXR.Input;
 
 #if UNITY_EDITOR
@@ -20,7 +23,7 @@ using ThumbstickControl = UnityEngine.InputSystem.Controls.StickControl; // If r
 using ThumbstickControl = UnityEngine.InputSystem.Controls.Vector2Control;
 #endif
 
-namespace UnityEngine.XR.OpenXR.Features.Interactions
+namespace Valve.OpenXR.Utils
 {
     /// <summary>
     /// This <see cref="OpenXRInteractionFeature"/> enables the use of Steam Frame controller interaction profiles in OpenXR.
@@ -32,21 +35,22 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         Desc = "Allows for mapping input to the Steam Frame Controller interaction profile.",
         DocumentationLink = "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md#interaction-profiles",
         OpenxrExtensionStrings = "XR_VALVE_frame_controller_interaction",
-        Version = "0.0.3",
+        Version = "0.0.4",
         Category = UnityEditor.XR.OpenXR.Features.FeatureCategory.Interaction,
         FeatureId = featureId)]
 #endif
+    [MovedFrom(true, "UnityEngine.XR.OpenXR.Features.Interactions")]
     public class SteamFrameControllerProfile : OpenXRInteractionFeature
     {
         /// <summary>
         /// The feature id string. This is used to give the feature a well known id for reference.
         /// </summary>
-        public const string featureId = "com.unity.openxr.feature.input.frame_controller";
+        public const string featureId = "com.valvesoftware.openxr.utils.frame_controller";
 
         /// <summary>
         /// An Input System device based on the controller interaction profile Valve frame_controller.
         /// </summary>
-        [Preserve, InputControlLayout(displayName = "Steam Frame Controller Controller (OpenXR)", commonUsages = new[] { "LeftHand", "RightHand" })]
+        [Preserve, InputControlLayout(displayName = "Steam Frame Controller (OpenXR)", commonUsages = new[] { "LeftHand", "RightHand" })]
         public class SteamFrameController : XRControllerWithRumble
         {
             /// <summary>
@@ -56,43 +60,55 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
             public ThumbstickControl thumbstick { get; private set; }
 
             /// <summary>
-            /// A [AxisControl](xref:UnityEngine.InputSystem.Controls.AxisControl) that represents the <see cref="SteamFrameControllerProfile.squeeze"/> OpenXR binding.
+            /// A [AxisControl](xref:UnityEngine.InputSystem.Controls.AxisControl) that represents the <see cref="SteamFrameControllerProfile.squeezeValue"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "GripAxis", "squeeze" }, usage = "Grip")]
             public AxisControl grip { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.squeeze"/> OpenXR binding.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.squeezeClick"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "GripButton", "squeezeClicked" }, usage = "GripButton")]
             public ButtonControl gripPressed { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.squeeze"/> OpenXR binding.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.squeezeTouch"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "GripButtonTouched", "squeezeTouched" }, usage = "GripButtonTouch")]
             public ButtonControl gripTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.system"/> <see cref="SteamFrameControllerProfile.menu"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.menu"/> (right hand) or <see cref="SteamFrameControllerProfile.view"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "menuButton", "viewButton" }, usages = new[] { "MenuButton", "ViewButton" })]
             public ButtonControl menu { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.system"/> <see cref="SteamFrameControllerProfile.menu"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.menuTouch"/> (right hand) or <see cref="SteamFrameControllerProfile.viewTouch"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "menuButtonTouched", "viewButtonTouched" }, usages = new[] { "MenuButtonTouch", "ViewButtonTouch" })]
             public ButtonControl menuTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumper"/> <see cref="SteamFrameControllerProfile.bumper"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.system"/> OpenXR binding. The runtime may reserve this button for its own use.
+            /// </summary>
+            [Preserve, InputControl(alias = "systemButton", usage = "SystemButton")]
+            public ButtonControl system { get; private set; }
+
+            /// <summary>
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.systemTouch"/> OpenXR binding. The runtime may reserve this button for its own use.
+            /// </summary>
+            [Preserve, InputControl(alias = "systemButtonTouched", usage = "SystemButtonTouch")]
+            public ButtonControl systemTouched { get; private set; }
+
+            /// <summary>
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumperClick"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "bumperButton" }, usage = "BumperButton")]
             public ButtonControl bumper { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumperTouched"/> <see cref="SteamFrameControllerProfile.bumper"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumperTouch"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "bumperButtonTouched" }, usage = "BumperButtonTouch")]
             public ButtonControl bumperTouched { get; private set; }
@@ -100,25 +116,25 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
 
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonY"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadUp"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonTop", "buttonY", "buttonDpadUp" }, usages = new[] { "FaceButtonTop", "YButton", "DpadUpButton" })]
             public ButtonControl faceButtonTop { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonB"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadLeft"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonOutside", "buttonB", "buttonDpadLeft" }, usages = new[] { "FaceButtonOutside", "BButton", "DpadLeftButton" })]
             public ButtonControl faceButtonOutside { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadDown"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonBottom", "buttonA", "buttonDpadDown" }, usages = new[] { "PrimaryButton", "FaceButtonBottom", "AButton", "DpadDownButton" })]
             public ButtonControl faceButtonBottom { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonX"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadRight"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonInside", "buttonX", "buttonDpadRight" }, usages = new[] { "SecondaryButton", "FaceButtonInside", "XButton", "DpadRightButton" })]
             public ButtonControl faceButtonInside { get; private set; }
@@ -126,25 +142,25 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
 
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonYTouch"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadUpTouch"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonTopTouched", "buttonYTouched", "buttonDpadUpTouched" }, usages = new[] { "FaceButtonTopTouch", "YButtonTouch", "DpadUpButtonTouch" })]
             public ButtonControl faceButtonTopTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonBTouch"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadLeftTouch"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonOutsideTouched", "buttonBTouched", "buttonDpadLeftTouched" }, usages = new[] { "FaceButtonOutsideTouch", "BButtonTouch", "DpadLeftButtonTouch" })]
             public ButtonControl faceButtonOutsideTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonATouch"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadDownTouch"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonBottomTouched", "buttonATouched", "buttonDpadDownTouched" }, usages = new[] { "PrimaryButtonTouch", "FaceButtonBottomTouch", "AButtonTouch", "DpadDownButtonTouch" })]
             public ButtonControl faceButtonBottomTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonA"/> <see cref="SteamFrameControllerProfile.buttonX"/> OpenXR bindings, depending on handedness.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.buttonXTouch"/> (right hand) or <see cref="SteamFrameControllerProfile.buttonDpadRightTouch"/> (left hand) OpenXR binding, depending on handedness.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "buttonInsideTouched", "buttonXTouched", "buttonDpadRightTouched" }, usages = new[] { "SecondaryButtonTouch", "FaceButtonInsideTouch", "XButtonTouch", "DpadRightButtonTouch" })]
             public ButtonControl faceButtonInsideTouched { get; private set; }
@@ -158,7 +174,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
             public AxisControl trigger { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.trigger"/> OpenXR binding.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.triggerClick"/> OpenXR binding.
             /// </summary>
             [Preserve, InputControl(aliases = new[] { "indexButton", "indexTouched", "triggerbutton" }, usage = "TriggerButton")]
             public ButtonControl triggerPressed { get; private set; }
@@ -265,6 +281,8 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
 
                 menu = GetChildControl<ButtonControl>("menu");
                 menuTouched = GetChildControl<ButtonControl>("menuTouched");
+                system = GetChildControl<ButtonControl>("system");
+                systemTouched = GetChildControl<ButtonControl>("systemTouched");
 
                 thumbstickClicked = GetChildControl<ButtonControl>("thumbstickClicked");
                 thumbstickTouched = GetChildControl<ButtonControl>("thumbstickTouched");
@@ -290,47 +308,56 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         public const string profile = "/interaction_profiles/valve/frame_controller_valve"; 
 
         // Available Bindings
+
         // Left Hand Only
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/x/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_up/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadUp = "/input/dpad_up/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/x/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_up/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadUpTouch = "/input/dpad_up/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/y/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_right/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadRight = "/input/dpad_right/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/y/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_right/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadRightTouch = "/input/dpad_right/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/x/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_down/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadDown = "/input/dpad_down/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/x/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_down/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadDownTouch = "/input/dpad_down/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/y/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_left/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadLeft = "/input/dpad_left/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/y/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/dpad_left/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
         public const string buttonDpadLeftTouch = "/input/dpad_left/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/menu/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/view/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
-        public const string buttonView = "/input/view/click";
+        public const string view = "/input/view/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/menu/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/view/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.leftHand"/> user path.
         /// </summary>
-        public const string buttonViewTouch = "/input/view/touch";
+        public const string viewTouch = "/input/view/touch";
+        /// <summary>
+        /// Same binding as <see cref="view"/>. Kept for source compatibility.
+        /// </summary>
+        public const string buttonView = view;
+        /// <summary>
+        /// Same binding as <see cref="viewTouch"/>. Kept for source compatibility.
+        /// </summary>
+        public const string buttonViewTouch = viewTouch;
 
         // Right Hand Only
         /// <summary>
@@ -342,7 +369,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         public const string buttonATouch = "/input/a/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '..."/input/b/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/b/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
         /// </summary>
         public const string buttonB = "/input/b/click";
         /// <summary>
@@ -358,7 +385,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         public const string buttonXTouch = "/input/x/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '..."/input/y/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/y/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
         /// </summary>
         public const string buttonY = "/input/y/click";
         /// <summary>
@@ -366,29 +393,21 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         public const string buttonYTouch = "/input/y/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/menu/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
         /// </summary>
         public const string menu = "/input/menu/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
+        /// Constant for a boolean interaction binding '.../input/menu/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
         /// </summary>
         public const string menuTouch = "/input/menu/touch";
-        /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
-        /// </summary>
-        public const string view = "/input/view/click";
-        /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. This binding is only available for the <see cref="OpenXRInteractionFeature.UserPaths.rightHand"/> user path.
-        /// </summary>
-        public const string viewTouch = "/input/view/touch";
 
         // Both Hands
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. The runtime may reserve this button for its own use and not deliver it to the application.
         /// </summary>
         public const string system = "/input/system/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/system/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. 
+        /// Constant for a boolean interaction binding '.../input/system/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs. The runtime may reserve this button for its own use and not deliver it to the application.
         /// </summary>
         public const string systemTouch = "/input/system/touch";
         /// <summary>
@@ -396,19 +415,19 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         public const string squeezeValue = "/input/squeeze/value";
         /// <summary>
-        /// Constant for a float interaction binding '.../input/squeeze/value' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/squeeze/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string squeezeClick = "/input/squeeze/click";
         /// <summary>
-        /// Constant for a float interaction binding '.../input/squeeze/value' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/squeeze/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string squeezeTouch = "/input/squeeze/touch";
         /// <summary>
-        /// Constant for a float interaction binding '.../input/squeeze/value' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/bumper/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string bumperClick = "/input/bumper/click";
         /// <summary>
-        /// Constant for a float interaction binding '.../input/squeeze/value' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/bumper/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string bumperTouch = "/input/bumper/touch";
         /// <summary>
@@ -416,11 +435,15 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         public const string trigger = "/input/trigger/value";
         /// <summary>
+        /// Constant for a boolean interaction binding '.../input/trigger/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// </summary>
+        public const string triggerClick = "/input/trigger/click";
+        /// <summary>
         /// Constant for a boolean interaction binding '.../input/trigger/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string triggerTouch = "/input/trigger/touch";
         /// <summary>
-        /// Constant for a Vector2 interaction binding '...//input/thumbstick' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a Vector2 interaction binding '.../input/thumbstick' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
         public const string thumbstick = "/input/thumbstick";
         /// <summary>
@@ -451,7 +474,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         protected override void RegisterDeviceLayout()
         {
-            InputSystem.InputSystem.RegisterLayout(typeof(SteamFrameController),
+            UnityEngine.InputSystem.InputSystem.RegisterLayout(typeof(SteamFrameController),
                 matches: new InputDeviceMatcher()
                     .WithInterface(XRUtilities.InterfaceMatchAnyVersion)
                     .WithProduct(kDeviceLocalizedName));
@@ -462,7 +485,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
         /// </summary>
         protected override void UnregisterDeviceLayout()
         {
-            InputSystem.InputSystem.RemoveLayout(nameof(SteamFrameController));
+            UnityEngine.InputSystem.InputSystem.RemoveLayout(nameof(SteamFrameController));
         }
 
         /// <summary>
@@ -540,7 +563,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     // Grip Pressed
                     new ActionConfig()
                     {
-                        name = "gripPressed",
+                        name = "grippressed",
                         localizedName = "Grip Pressed",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -559,7 +582,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     // Grip Touched
                     new ActionConfig()
                     {
-                        name = "gripTouched",
+                        name = "griptouched",
                         localizedName = "Grip Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -605,7 +628,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     // Menu touch
                     new ActionConfig()
                     {
-                        name = "menuTouched",
+                        name = "menutouched",
                         localizedName = "Menu Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -623,20 +646,55 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                             },
                             new ActionBinding()
                             {
-                                interactionPath = view,
+                                interactionPath = viewTouch,
                                 interactionProfileName = profile,
                                 userPaths = new List<string>() { UserPaths.leftHand }
                             }
                         }
                     },
-
-
-
+                    // System
+                    new ActionConfig()
+                    {
+                        name = "system",
+                        localizedName = "System",
+                        type = ActionType.Binary,
+                        usages = new List<string>()
+                        {
+                            "SystemButton"
+                        },
+                        bindings = new List<ActionBinding>()
+                        {
+                            new ActionBinding()
+                            {
+                                interactionPath = system,
+                                interactionProfileName = profile,
+                            }
+                        }
+                    },
+                    // System Touched
+                    new ActionConfig()
+                    {
+                        name = "systemtouched",
+                        localizedName = "System Touched",
+                        type = ActionType.Binary,
+                        usages = new List<string>()
+                        {
+                            "SystemButtonTouch"
+                        },
+                        bindings = new List<ActionBinding>()
+                        {
+                            new ActionBinding()
+                            {
+                                interactionPath = systemTouch,
+                                interactionProfileName = profile,
+                            }
+                        }
+                    },
 
                     //topButton Press
                     new ActionConfig()
                     {
-                        name = "faceButtonTop",
+                        name = "facebuttontop",
                         localizedName = "Face Button Top",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -664,7 +722,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //topButton Touch
                     new ActionConfig()
                     {
-                        name = "faceButtonTopTouched",
+                        name = "facebuttontoptouched",
                         localizedName = "Face Button Top Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -693,7 +751,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //outsideButton Press
                     new ActionConfig()
                     {
-                        name = "faceButtonOutside",
+                        name = "facebuttonoutside",
                         localizedName = "Face Button Outside",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -721,7 +779,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //outsideButton Touch
                     new ActionConfig()
                     {
-                        name = "faceButtonOutsideTouched",
+                        name = "facebuttonoutsidetouched",
                         localizedName = "Face Button Outside Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -750,7 +808,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //bottomButton Press
                     new ActionConfig()
                     {
-                        name = "faceButtonBottom",
+                        name = "facebuttonbottom",
                         localizedName = "Face Button Bottom",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -779,7 +837,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //bottomButton Touch
                     new ActionConfig()
                     {
-                        name = "faceButtonBottomTouched",
+                        name = "facebuttonbottomtouched",
                         localizedName = "Face Button Bottom Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -809,7 +867,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //insideButton Press
                     new ActionConfig()
                     {
-                        name = "faceButtonInside",
+                        name = "facebuttoninside",
                         localizedName = "Face Button Inside",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -838,7 +896,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //insideButton Touch
                     new ActionConfig()
                     {
-                        name = "faceButtonInsideTouched",
+                        name = "facebuttoninsidetouched",
                         localizedName = "Face Button Inside Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -888,7 +946,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     // Trigger Pressed
                     new ActionConfig()
                     {
-                        name = "triggerPressed",
+                        name = "triggerpressed",
                         localizedName = "Trigger Pressed",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -899,7 +957,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                         {
                             new ActionBinding()
                             {
-                                interactionPath = trigger,
+                                interactionPath = triggerClick,
                                 interactionProfileName = profile,
                             }
                         }
@@ -907,7 +965,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //Trigger Touch
                     new ActionConfig()
                     {
-                        name = "triggerTouched",
+                        name = "triggertouched",
                         localizedName = "Trigger Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -926,7 +984,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //Thumbstick Clicked
                     new ActionConfig()
                     {
-                        name = "thumbstickClicked",
+                        name = "thumbstickclicked",
                         localizedName = "Thumbstick Clicked",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -945,7 +1003,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //Thumbstick Touched
                     new ActionConfig()
                     {
-                        name = "thumbstickTouched",
+                        name = "thumbsticktouched",
                         localizedName = "Thumbstick Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -964,7 +1022,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //Bumper
                     new ActionConfig()
                     {
-                        name = "bumperButton",
+                        name = "bumperbutton",
                         localizedName = "Bumper Button",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -983,7 +1041,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     //Bumper Touched
                     new ActionConfig()
                     {
-                        name = "bumperTouched",
+                        name = "bumpertouched",
                         localizedName = "Bumper Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
@@ -1002,7 +1060,7 @@ namespace UnityEngine.XR.OpenXR.Features.Interactions
                     // Device Pose
                     new ActionConfig()
                     {
-                        name = "devicePose",
+                        name = "devicepose",
                         localizedName = "Device Pose",
                         type = ActionType.Pose,
                         usages = new List<string>()
