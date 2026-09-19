@@ -14,7 +14,8 @@ namespace Valve.OpenXR.Utils.Editor
             ValveOpenXRFoveatedRenderingFeature.featureId,
             ValveOpenXRRenderRegionsFeature.featureId,
             ValveOpenXRLeptonValidationFeature.featureId,
-            ValveOpenXRRefreshRateFeature.featureId
+            ValveOpenXRRefreshRateFeature.featureId,
+            ValveOpenXRAppSpaceDeltaPoseFeature.featureId
             },
         DefaultFeatureIds = new string[0]
     )]

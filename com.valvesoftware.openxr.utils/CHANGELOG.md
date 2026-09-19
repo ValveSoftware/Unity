@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.9] - 2026-09-19
+### App Space Delta Pose
+### Added
+- `Valve Utils: App Space Delta Pose` OpenXR feature (`ValveOpenXRAppSpaceDeltaPoseFeature`). Requests the `XR_VALVE_app_space_delta_pose` extension and, when the runtime enables it, publishes the application's player locomotion delta (`appSpaceDeltaPose`) and camera depth range to the runtime every frame so Steam Frame's frame synthesis can account for smooth locomotion, turning and vehicles without the application implementing `XR_FB_space_warp` or `XR_EXT_frame_synthesis` itself.
+- `AppSpaceDeltaPoseTrackingSpace` component: add to the tracking-space transform to register it with the feature.
+- Documentation covering the delta convention, what must and must not be included, and how the transport works.
+
 ## [1.0.8] - 2026-09-08
 ### Steam Frame Controller Profile
 ### Changed
