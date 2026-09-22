@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.9] - 2026-09-21
+### Steam Frame Controller Profile
+### Changed
+- Renamed the bumper button to shoulder: controls `shoulder` and `shoulderTouched`, aliases `shoulderButton` and `shoulderButtonTouched`, usages `ShoulderButton` and `ShoulderButtonTouch`, constants `shoulderClick` and `shoulderTouch`, bound to `/input/shoulder/click` and `/input/shoulder/touch`. Bindings that used the `bumper` names need updating, and the runtime must expose the shoulder paths.
+- The `devicepose` and `pointer` actions are now first in the action map, so the pose block sits at offset 0 and adding controls no longer shifts it.
+
+### Fixed
+- `shoulderTouched` now declares the `ShoulderButtonTouch` usage in its `ActionConfig`, matching the control and the docs.
+- Controller poses were not applied. The `isTracked`, `trackingState`, `devicePosition`, `deviceRotation`, `pointerPosition` and `pointerRotation` offsets did not match the state layout, so `trackingState` read button bytes and reported the controller as untracked. They are now 0, 4, 8, 20, 68 and 80.
+
 ## [1.0.8] - 2026-09-08
 ### Steam Frame Controller Profile
 ### Changed

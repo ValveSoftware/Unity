@@ -102,16 +102,16 @@ namespace Valve.OpenXR.Utils
             public ButtonControl systemTouched { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumperClick"/> OpenXR binding.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.shoulderClick"/> OpenXR binding.
             /// </summary>
-            [Preserve, InputControl(aliases = new[] { "bumperButton" }, usage = "BumperButton")]
-            public ButtonControl bumper { get; private set; }
+            [Preserve, InputControl(aliases = new[] { "shoulderButton" }, usage = "ShoulderButton")]
+            public ButtonControl shoulder { get; private set; }
 
             /// <summary>
-            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.bumperTouch"/> OpenXR binding.
+            /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) that represents the <see cref="SteamFrameControllerProfile.shoulderTouch"/> OpenXR binding.
             /// </summary>
-            [Preserve, InputControl(aliases = new[] { "bumperButtonTouched" }, usage = "BumperButtonTouch")]
-            public ButtonControl bumperTouched { get; private set; }
+            [Preserve, InputControl(aliases = new[] { "shoulderButtonTouched" }, usage = "ShoulderButtonTouch")]
+            public ButtonControl shoulderTouched { get; private set; }
 
 
 
@@ -214,37 +214,37 @@ namespace Valve.OpenXR.Utils
             /// <summary>
             /// A [ButtonControl](xref:UnityEngine.InputSystem.Controls.ButtonControl) required for backwards compatibility with the XRSDK layouts. This represents the overall tracking state of the device. This value is equivalent to mapping devicePose/isTracked.
             /// </summary>
-            [Preserve, InputControl(offset = 28, usage = "IsTracked")]
+            [Preserve, InputControl(offset = 0, usage = "IsTracked")]
             new public ButtonControl isTracked { get; private set; }
 
             /// <summary>
             /// A [IntegerControl](xref:UnityEngine.InputSystem.Controls.IntegerControl) required for backwards compatibility with the XRSDK layouts. This represents the bit flag set to indicate what data is valid. This value is equivalent to mapping devicePose/trackingState.
             /// </summary>
-            [Preserve, InputControl(offset = 32, usage = "TrackingState")]
+            [Preserve, InputControl(offset = 4, usage = "TrackingState")]
             new public IntegerControl trackingState { get; private set; }
 
             /// <summary>
             /// A [Vector3Control](xref:UnityEngine.InputSystem.Controls.Vector3Control) required for backwards compatibility with the XRSDK layouts. This is the device position. For the device, this is both the grip and the pointer position. This value is equivalent to mapping devicePose/position.
             /// </summary>
-            [Preserve, InputControl(offset = 40, noisy = true, alias = "gripPosition")]
+            [Preserve, InputControl(offset = 8, noisy = true, alias = "gripPosition")]
             new public Vector3Control devicePosition { get; private set; }
 
             /// <summary>
             /// A [QuaternionControl](xref:UnityEngine.InputSystem.Controls.QuaternionControl) required for backwards compatibility with the XRSDK layouts. This is the device orientation. For the device, this is both the grip and the pointer rotation. This value is equivalent to mapping devicePose/rotation.
             /// </summary>
-            [Preserve, InputControl(offset = 52, noisy = true, alias = "gripOrientation")]
+            [Preserve, InputControl(offset = 20, noisy = true, alias = "gripOrientation")]
             new public QuaternionControl deviceRotation { get; private set; }
 
             /// <summary>
             /// A [Vector3Control](xref:UnityEngine.InputSystem.Controls.Vector3Control) required for back compatibility with the XRSDK layouts. This is the pointer position. This value is equivalent to mapping pointerPose/position.
             /// </summary>
-            [Preserve, InputControl(offset = 100)]
+            [Preserve, InputControl(offset = 68)]
             public Vector3Control pointerPosition { get; private set; }
 
             /// <summary>
             /// A [QuaternionControl](xref:UnityEngine.InputSystem.Controls.QuaternionControl) required for backwards compatibility with the XRSDK layouts. This is the pointer rotation. This value is equivalent to mapping pointerPose/rotation.
             /// </summary>
-            [Preserve, InputControl(offset = 112, alias = "pointerOrientation")]
+            [Preserve, InputControl(offset = 80, alias = "pointerOrientation")]
             public QuaternionControl pointerRotation { get; private set; }
 
             /// <summary>
@@ -267,8 +267,8 @@ namespace Valve.OpenXR.Utils
                 grip = GetChildControl<AxisControl>("grip");
                 gripPressed = GetChildControl<ButtonControl>("gripPressed");
                 gripTouched = GetChildControl<ButtonControl>("gripTouched");
-                bumper = GetChildControl<ButtonControl>("bumper");
-                bumperTouched = GetChildControl<ButtonControl>("bumperTouched");
+                shoulder = GetChildControl<ButtonControl>("shoulder");
+                shoulderTouched = GetChildControl<ButtonControl>("shoulderTouched");
 
                 faceButtonTop = GetChildControl<ButtonControl>("faceButtonTop");
                 faceButtonOutside = GetChildControl<ButtonControl>("faceButtonOutside");
@@ -423,13 +423,13 @@ namespace Valve.OpenXR.Utils
         /// </summary>
         public const string squeezeTouch = "/input/squeeze/touch";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/bumper/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/shoulder/click' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
-        public const string bumperClick = "/input/bumper/click";
+        public const string shoulderClick = "/input/shoulder/click";
         /// <summary>
-        /// Constant for a boolean interaction binding '.../input/bumper/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
+        /// Constant for a boolean interaction binding '.../input/shoulder/touch' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
-        public const string bumperTouch = "/input/bumper/touch";
+        public const string shoulderTouch = "/input/shoulder/touch";
         /// <summary>
         /// Constant for a float interaction binding '.../input/trigger/value' OpenXR Input Binding. Used by input subsystem to bind actions to physical inputs.
         /// </summary>
@@ -522,6 +522,44 @@ namespace Valve.OpenXR.Utils
                 },
                 actions = new List<ActionConfig>()
                 {
+                    // Device Pose
+                    new ActionConfig()
+                    {
+                        name = "devicepose",
+                        localizedName = "Device Pose",
+                        type = ActionType.Pose,
+                        usages = new List<string>()
+                        {
+                            "Device"
+                        },
+                        bindings = new List<ActionBinding>()
+                        {
+                            new ActionBinding()
+                            {
+                                interactionPath = grip,
+                                interactionProfileName = profile,
+                            }
+                        }
+                    },
+                    // Pointer Pose
+                    new ActionConfig()
+                    {
+                        name = "pointer",
+                        localizedName = "Pointer Pose",
+                        type = ActionType.Pose,
+                        usages = new List<string>()
+                        {
+                            "Pointer"
+                        },
+                        bindings = new List<ActionBinding>()
+                        {
+                            new ActionBinding()
+                            {
+                                interactionPath = aim,
+                                interactionProfileName = profile,
+                            }
+                        }
+                    },
                     // Joystick
                     new ActionConfig()
                     {
@@ -1019,78 +1057,40 @@ namespace Valve.OpenXR.Utils
                             }
                         }
                     },
-                    //Bumper
+                    //Shoulder
                     new ActionConfig()
                     {
-                        name = "bumperbutton",
-                        localizedName = "Bumper Button",
+                        name = "shoulderbutton",
+                        localizedName = "Shoulder Button",
                         type = ActionType.Binary,
                         usages = new List<string>()
                         {
-                            "BumperButton"
+                            "ShoulderButton"
                         },
                         bindings = new List<ActionBinding>()
                         {
                             new ActionBinding()
                             {
-                                interactionPath = bumperClick,
+                                interactionPath = shoulderClick,
                                 interactionProfileName = profile,
                             }
                         }
                     },
-                    //Bumper Touched
+                    //Shoulder Touched
                     new ActionConfig()
                     {
-                        name = "bumpertouched",
-                        localizedName = "Bumper Touched",
+                        name = "shouldertouched",
+                        localizedName = "Shoulder Touched",
                         type = ActionType.Binary,
                         usages = new List<string>()
                         {
-                            "BumperTouch"
+                            "ShoulderButtonTouch"
                         },
                         bindings = new List<ActionBinding>()
                         {
                             new ActionBinding()
                             {
-                                interactionPath = bumperTouch,
-                                interactionProfileName = profile,
-                            }
-                        }
-                    },
-                    // Device Pose
-                    new ActionConfig()
-                    {
-                        name = "devicepose",
-                        localizedName = "Device Pose",
-                        type = ActionType.Pose,
-                        usages = new List<string>()
-                        {
-                            "Device"
-                        },
-                        bindings = new List<ActionBinding>()
-                        {
-                            new ActionBinding()
-                            {
-                                interactionPath = grip,
-                                interactionProfileName = profile,
-                            }
-                        }
-                    },
-                    // Pointer Pose
-                    new ActionConfig()
-                    {
-                        name = "pointer",
-                        localizedName = "Pointer Pose",
-                        type = ActionType.Pose,
-                        usages = new List<string>()
-                        {
-                            "Pointer"
-                        },
-                        bindings = new List<ActionBinding>()
-                        {
-                            new ActionBinding()
-                            {
-                                interactionPath = aim,
+                                interactionPath = shoulderTouch,
                                 interactionProfileName = profile,
                             }
                         }
