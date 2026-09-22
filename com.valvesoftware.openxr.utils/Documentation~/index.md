@@ -48,7 +48,7 @@ git@github.com:ValveSoftware/Unity.git?path=com.valvesoftware.openxr.utils
 
 Enables the `/interaction_profiles/valve/frame_controller_valve` interaction profile from the `XR_VALVE_frame_controller_interaction` extension and exposes a `<SteamFrameController>` device layout to the Unity Input System.
 
-Without this profile, Steam Frame controllers are presented to your application as emulated Oculus Touch controllers. Enable this profile to bind to Frame-specific buttons (the four face buttons on each hand, the bumper buttons, and the View button) and to receive Frame-specific controller poses.
+Without this profile, Steam Frame controllers are presented to your application as emulated Oculus Touch controllers. Enable this profile to bind to Frame-specific buttons (the four face buttons on each hand, the shoulder buttons, and the View button) and to receive Frame-specific controller poses.
 
 #### Enabling the profile
 
@@ -84,8 +84,8 @@ Each face button also has a capacitive touch control named with a `Touched` suff
 | `grip` | Axis | `Grip` | `/input/squeeze/value` | `/input/squeeze/value` |
 | `gripPressed` | Button | `GripButton` | `/input/squeeze/click` | `/input/squeeze/click` |
 | `gripTouched` | Button | `GripButtonTouch` | `/input/squeeze/touch` | `/input/squeeze/touch` |
-| `bumper` | Button | `BumperButton` | `/input/bumper/click` | `/input/bumper/click` |
-| `bumperTouched` | Button | `BumperButtonTouch` | `/input/bumper/touch` | `/input/bumper/touch` |
+| `shoulder` | Button | `ShoulderButton` | `/input/shoulder/click` | `/input/shoulder/click` |
+| `shoulderTouched` | Button | `ShoulderButtonTouch` | `/input/shoulder/touch` | `/input/shoulder/touch` |
 | `menu` | Button | `MenuButton`, `ViewButton` | `/input/menu/click` | `/input/view/click` |
 | `menuTouched` | Button | `MenuButtonTouch`, `ViewButtonTouch` | `/input/menu/touch` | `/input/view/touch` |
 | `system` | Button | `SystemButton` | `/input/system/click` | `/input/system/click` |
