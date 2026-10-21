@@ -8,31 +8,16 @@
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.xr.openxr",
-            "expression": "1.9.0",
-            "define": "UNITY_OPENXR_1_9_0"
-        },
-        {
-            "name": "com.unity.xr.openxr",
-            "expression": "1.5.3",
-            "define": "UNITY_OPENXR_1_5_3"
-        },
-        {
             "name": "Unity",
             "expression": "6000.0.0",
             "define": "USE_XR_DISPLAY_FOVEATION_API"
-        },
-        {
-            "name": "Unity",
-            "expression": "[2022.2,6000.0.0)",
-            "define": "USE_LEGACY_BOOT_CONFIG"
         }
     ],
     "noEngineReferences": false

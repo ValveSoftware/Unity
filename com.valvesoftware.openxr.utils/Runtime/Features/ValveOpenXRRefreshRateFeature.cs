@@ -5,193 +5,227 @@ using UnityEditor;
 using UnityEngine.XR.OpenXR.Features;
 using UnityEngine;
 using UnityEngine.XR.OpenXR;
+using UnityEngine.XR.OpenXR.NativeTypes;
 #if UNITY_EDITOR
 using UnityEditor.XR.OpenXR.Features;
 #endif
 
-
-/// <summary>
-/// Example feature showing how to intercept a single OpenXR function.
-/// </summary>
-#if UNITY_EDITOR
-[OpenXRFeature(UiName = "Valve Utils: Refresh Rate",
-    BuildTargetGroups = new[] { BuildTargetGroup.Standalone, BuildTargetGroup.WSA, BuildTargetGroup.Android },
-    Company = "Valve Software",
-    DocumentationLink = "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md#open-xr-features",
-    Desc = "Retrieve current hmd refresh rate",
-    OpenxrExtensionStrings = "XR_FB_display_refresh_rate",
-    Version = "1",
-    FeatureId = featureId)]
-#endif
-public class ValveOpenXRRefreshRateFeature : OpenXRFeature
+namespace Valve.OpenXR.Utils
 {
-    public const string featureId = "com.valve.openxr.refreshrate";
-
-    public bool initialized { get { return _initialized; } }
-
-    private bool _initialized = false;
-
-    private ulong instanceHandle = ulong.MaxValue;
-    private ulong sessionHandle = ulong.MaxValue;
-
-    internal delegate int Type_xrGetInstanceProcAddr(ulong instance, [MarshalAs(UnmanagedType.LPStr)] string name, out IntPtr function);
-    internal delegate int Type_xrGetDisplayRefreshRateFB(ulong session, out float displayRefreshRate);
-    internal delegate int Type_xrRequestDisplayRefreshRateFB(ulong session, float displayRefreshRate);
-    internal delegate int Type_xrEnumerateDisplayRefreshRatesFB(
-        ulong session,
-        uint displayRefreshRateCapacityInput,
-        out uint displayRefreshRateCountOutput,
-        [Out] float[] displayRefreshRates // float*
-    );
-
-    private Type_xrGetInstanceProcAddr xrGetInstanceProcAddrDelegate;
-    private Type_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
-    private Type_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB;
-    private Type_xrEnumerateDisplayRefreshRatesFB xrEnumerateDisplayRefreshRatesFB;
-
-    public event OnRefreshRateFeatureAvailableDelegate OnRefreshRateFeatureAvailable;
-
-    protected override bool OnInstanceCreate(ulong xrInstance)
+    /// <summary>
+    /// Reads and sets the display refresh rate through XR_FB_display_refresh_rate.
+    /// </summary>
+#if UNITY_EDITOR
+    [OpenXRFeature(UiName = "Valve Utils: Refresh Rate",
+        BuildTargetGroups = new[] { BuildTargetGroup.Standalone, BuildTargetGroup.WSA, BuildTargetGroup.Android },
+        Company = "Valve Software",
+        DocumentationLink = "https://github.com/ValveSoftware/Unity/blob/main/com.valvesoftware.openxr.utils/Documentation~/index.md#open-xr-features",
+        Desc = "Retrieve current hmd refresh rate",
+        OpenxrExtensionStrings = "XR_FB_display_refresh_rate",
+        Version = "1.1.0",
+        FeatureId = featureId)]
+#endif
+    public class ValveOpenXRRefreshRateFeature : OpenXRFeature
     {
-        Debug.Log("Extension: XR_FB_display_refresh_rate - OnInstanceCreate");
-        instanceHandle = xrInstance;
+        public const string featureId = "com.valve.openxr.refreshrate";
 
-        return base.OnInstanceCreate(xrInstance);
-    }
+        public bool initialized { get { return _initialized; } }
 
-    protected override void OnSessionBegin(ulong xrSession)
-    {
-        Debug.Log("Extension: XR_FB_display_refresh_rate - OnSessionBegin: " + xrSession);
-        if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
+        private bool _initialized = false;
+
+        private ulong instanceHandle = ulong.MaxValue;
+        private ulong sessionHandle = ulong.MaxValue;
+
+        internal delegate XrResult Type_xrGetDisplayRefreshRateFB(ulong session, out float displayRefreshRate);
+        internal delegate XrResult Type_xrRequestDisplayRefreshRateFB(ulong session, float displayRefreshRate);
+        internal delegate XrResult Type_xrEnumerateDisplayRefreshRatesFB(
+            ulong session,
+            uint displayRefreshRateCapacityInput,
+            out uint displayRefreshRateCountOutput,
+            [Out] float[] displayRefreshRates // float*
+        );
+
+        private Type_xrGetDisplayRefreshRateFB xrGetDisplayRefreshRateFB;
+        private Type_xrRequestDisplayRefreshRateFB xrRequestDisplayRefreshRateFB;
+        private Type_xrEnumerateDisplayRefreshRatesFB xrEnumerateDisplayRefreshRatesFB;
+
+        // Fixed per session, enumerated on first request.
+        private float[] supportedRefreshRates;
+
+        public event OnRefreshRateFeatureAvailableDelegate OnRefreshRateFeatureAvailable;
+
+        protected override bool OnInstanceCreate(ulong xrInstance)
         {
-            Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
+            instanceHandle = xrInstance;
+
+            return base.OnInstanceCreate(xrInstance);
+        }
+
+        protected override void OnSessionBegin(ulong xrSession)
+        {
+            if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
+            {
+                base.OnSessionBegin(xrSession);
+                return;
+            }
+
+            sessionHandle = xrSession;
+
+            if (!InitializeFunctions())
+            {
+                sessionHandle = ulong.MaxValue;
+                base.OnSessionBegin(xrSession);
+                return;
+            }
+
+            _initialized = true;
+
+            if (OnRefreshRateFeatureAvailable != null)
+            {
+                try
+                {
+                    OnRefreshRateFeatureAvailable();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
+
             base.OnSessionBegin(xrSession);
-            return;
         }
 
-        sessionHandle = xrSession;
-
-        InitializeFunctions();
-
-        if (OnRefreshRateFeatureAvailable != null)
-            OnRefreshRateFeatureAvailable();
-
-        _initialized = true;
-
-        base.OnSessionBegin(xrSession);
-    }
-
-    protected override void OnSessionDestroy(ulong xrSession)
-    {
-        _initialized = false;
-        OnRefreshRateFeatureAvailable = null;
-        base.OnSessionDestroy(xrSession);
-    }
-
-    protected override void OnSessionEnd(ulong xrSession)
-    {
-        _initialized = false;
-        OnRefreshRateFeatureAvailable = null;
-        base.OnSessionDestroy(xrSession);
-    }
-
-    private void InitializeFunctions()
-    {
-        xrGetInstanceProcAddrDelegate = (Type_xrGetInstanceProcAddr)Marshal.GetDelegateForFunctionPointer(xrGetInstanceProcAddr, typeof(Type_xrGetInstanceProcAddr));
-
-        IntPtr getRefreshPointer = IntPtr.Zero;
-        var result = xrGetInstanceProcAddrDelegate(instanceHandle, "xrGetDisplayRefreshRateFB", out getRefreshPointer);
-        if (result != 0)
-            Debug.LogError("ERROR: Error getting function pointer for: xrGetDisplayRefreshRateFB. " + result.ToString());
-
-        xrGetDisplayRefreshRateFB = Marshal.GetDelegateForFunctionPointer<Type_xrGetDisplayRefreshRateFB>(getRefreshPointer);
-
-
-        IntPtr requestRefreshPointer = IntPtr.Zero;
-        result = xrGetInstanceProcAddrDelegate(instanceHandle, "xrRequestDisplayRefreshRateFB", out requestRefreshPointer);
-        if (result != 0)
-            Debug.LogError("ERROR: Error getting function pointer for: xrRequestDisplayRefreshRateFB. " + result.ToString());
-
-        xrRequestDisplayRefreshRateFB = Marshal.GetDelegateForFunctionPointer<Type_xrRequestDisplayRefreshRateFB>(requestRefreshPointer);
-
-
-        IntPtr enumerateDisplayRefreshRatesPointer = IntPtr.Zero;
-        result = xrGetInstanceProcAddrDelegate(instanceHandle, "xrEnumerateDisplayRefreshRatesFB", out enumerateDisplayRefreshRatesPointer);
-        if (result != 0)
-            Debug.LogError("ERROR: Error getting function pointer for: xrEnumerateDisplayRefreshRatesFB. " + result.ToString());
-
-        xrEnumerateDisplayRefreshRatesFB = Marshal.GetDelegateForFunctionPointer<Type_xrEnumerateDisplayRefreshRatesFB>(enumerateDisplayRefreshRatesPointer);
-    }
-
-    public float GetRefreshRate()
-    {
-        if (sessionHandle == ulong.MaxValue)
+        protected override void OnSessionDestroy(ulong xrSession)
         {
-            Debug.LogError("ERROR: RefreshRateFeature not set up.");
-            if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
-                Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
-
-            return -1;
+            _initialized = false;
+            OnRefreshRateFeatureAvailable = null;
+            sessionHandle = ulong.MaxValue;
+            supportedRefreshRates = null;
+            ClearFunctions();
+            base.OnSessionDestroy(xrSession);
         }
 
-        float refreshrate;
-        var result = xrGetDisplayRefreshRateFB(sessionHandle, out refreshrate);
+        protected override void OnSessionEnd(ulong xrSession)
+        {
+            _initialized = false;
+            base.OnSessionEnd(xrSession);
+        }
 
-        if (result != 0)
-            Debug.Log("WARNING: Result from xrGetDisplayRefreshRateFB was non-zero: " + result.ToString() + " :: " + refreshrate.ToString());
+        private bool InitializeFunctions()
+        {
+            if (!ValveOpenXRDelegates.TryGetInstanceProc(xrGetInstanceProcAddr, instanceHandle, "xrGetDisplayRefreshRateFB", out xrGetDisplayRefreshRateFB) ||
+                !ValveOpenXRDelegates.TryGetInstanceProc(xrGetInstanceProcAddr, instanceHandle, "xrRequestDisplayRefreshRateFB", out xrRequestDisplayRefreshRateFB) ||
+                !ValveOpenXRDelegates.TryGetInstanceProc(xrGetInstanceProcAddr, instanceHandle, "xrEnumerateDisplayRefreshRatesFB", out xrEnumerateDisplayRefreshRatesFB))
+            {
+                ClearFunctions();
+                return false;
+            }
 
-        return refreshrate;
+            return true;
+        }
+
+        private void ClearFunctions()
+        {
+            xrGetDisplayRefreshRateFB = null;
+            xrRequestDisplayRefreshRateFB = null;
+            xrEnumerateDisplayRefreshRatesFB = null;
+        }
+
+        public float GetRefreshRate()
+        {
+            if (sessionHandle == ulong.MaxValue)
+            {
+                if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
+                {
+                    Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
+                }
+                else
+                {
+                    Debug.LogError("ERROR: RefreshRateFeature not set up.");
+                }
+
+                return -1;
+            }
+
+            float refreshrate;
+            XrResult result = xrGetDisplayRefreshRateFB(sessionHandle, out refreshrate);
+
+            if (result != XrResult.Success)
+            {
+                Debug.Log("WARNING: Result from xrGetDisplayRefreshRateFB was non-zero: " + result.ToString() + " :: " + refreshrate.ToString());
+            }
+
+            return refreshrate;
+        }
+
+        public int SetRefreshRate(float refreshrate)
+        {
+            if (sessionHandle == ulong.MaxValue)
+            {
+                if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
+                {
+                    Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
+                }
+                else
+                {
+                    Debug.LogError("ERROR: RefreshRateFeature not set up.");
+                }
+
+                return -1;
+            }
+
+            XrResult result = xrRequestDisplayRefreshRateFB(sessionHandle, refreshrate);
+
+            if (result != XrResult.Success)
+            {
+                Debug.Log("WARNING: Result from xrRequestDisplayRefreshRateFB was non-zero: " + result.ToString() + " :: " + refreshrate.ToString());
+            }
+
+            return (int)result;
+        }
+
+        public int EnumerateRefreshRates(ref List<float> displayRefreshRates)
+        {
+            if (sessionHandle == ulong.MaxValue)
+            {
+                if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
+                {
+                    Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
+                }
+                else
+                {
+                    Debug.LogError("ERROR: RefreshRateFeature not set up.");
+                }
+
+                return -1;
+            }
+
+            displayRefreshRates.Clear();
+            if (supportedRefreshRates == null || supportedRefreshRates.Length == 0)
+            {
+                XrResult result = xrEnumerateDisplayRefreshRatesFB(sessionHandle, 0, out uint count, null);
+                if (result != XrResult.Success)
+                {
+                    Debug.Log("WARNING: Result from xrEnumerateDisplayRefreshRatesFB was non-zero: " + result.ToString());
+                    return (int)result;
+                }
+
+                float[] rates = new float[count];
+                result = xrEnumerateDisplayRefreshRatesFB(sessionHandle, count, out count, rates);
+                if (result != XrResult.Success)
+                {
+                    Debug.Log("WARNING: Result from xrEnumerateDisplayRefreshRatesFB(2) was non-zero: " + result.ToString());
+                    return (int)result;
+                }
+
+                Array.Resize(ref rates, (int)count);
+                supportedRefreshRates = rates;
+            }
+
+            displayRefreshRates.AddRange(supportedRefreshRates);
+            return (int)XrResult.Success;
+        }
     }
 
-    public int SetRefreshRate(float refreshrate)
-    {
-        if (sessionHandle == ulong.MaxValue)
-        {
-            Debug.LogError("ERROR: RefreshRateFeature not set up.");
-            if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
-                Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
-
-            return -1;
-        }
-
-        var result = xrRequestDisplayRefreshRateFB(sessionHandle, refreshrate);
-
-        if (result != 0)
-            Debug.Log("WARNING: Result from xrRequestDisplayRefreshRateFB was non-zero: " + result.ToString() + " :: " + refreshrate.ToString());
-
-        return result;
-    }
-
-    public int EnumerateRefreshRates(ref List<float> displayRefreshRates)
-    {
-        if (sessionHandle == ulong.MaxValue)
-        {
-            Debug.LogError("ERROR: RefreshRateFeature not set up.");
-            if (!OpenXRRuntime.IsExtensionEnabled("XR_FB_display_refresh_rate"))
-                Debug.LogError("ERROR: extension not enabled: XR_FB_display_refresh_rate");
-
-            return -1;
-        }
-
-        displayRefreshRates.Clear();
-        var result = xrEnumerateDisplayRefreshRatesFB(sessionHandle, 0, out var count, null);
-        if (result != 0)
-        {
-            Debug.Log("WARNING: Result from xrEnumerateDisplayRefreshRatesFB was non-zero: " + result.ToString());
-            return result;
-        }
-
-        var rates = new float[count];
-        result = xrEnumerateDisplayRefreshRatesFB(sessionHandle, count, out count, rates);
-        if (result != 0)
-        {
-            Debug.Log("WARNING: Result from xrEnumerateDisplayRefreshRatesFB(2) was non-zero: " + result.ToString());
-            return result;
-        }
-
-        displayRefreshRates.AddRange(rates);
-        return result;
-    }
+    public delegate void OnRefreshRateFeatureAvailableDelegate();
 }
-
-public delegate void OnRefreshRateFeatureAvailableDelegate();

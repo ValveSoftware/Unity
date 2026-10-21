@@ -10,10 +10,11 @@ public class SteamFrameCheckSimple : MonoBehaviour
 
         while (!done)
         {
-            if (SystemInfoFeature.IsInitialized())
+            if (ValveOpenXRSystemInfoFeature.IsInitialized())
             {
-                bool isRunningOnFrame = SystemInfoFeature.IsRunnginOnSteamFrame();
-                Debug.Log($"Is running on Steam Frame? {(isRunningOnFrame?"y":"n")}");
+                string systemName = ValveOpenXRSystemInfoFeature.GetSystemName();
+                bool isLocalSteamFrame = ValveOpenXRSystemInfoFeature.IsLocalSteamFrame();
+                Debug.Log($"OpenXR System: {systemName}, is local Steam Frame? {isLocalSteamFrame}");
                 done = true;
             }
 

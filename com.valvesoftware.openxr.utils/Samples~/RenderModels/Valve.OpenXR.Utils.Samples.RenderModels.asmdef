@@ -2,6 +2,7 @@
     "name": "Valve.OpenXR.Utils.Samples.RenderModels",
     "rootNamespace": "",
     "references": [
+        "GUID:4920cda478a7ad9418e70a29fd7c1eae",
         "GUID:4847341ff46394e83bb78fbd0652937e",
         "GUID:a42927d1d4a3b4cda9b076a7adecb9cc"
     ],
@@ -17,6 +18,21 @@
             "name": "com.unity.cloud.gltfast",
             "expression": "6",
             "define": "UNITY_GLTFAST"
+        },
+        {
+            "name": "com.unity.cloud.ktx",
+            "expression": "",
+            "define": "GLTFAST_KTX"
+        },
+        {
+            "name": "com.unity.cloud.draco",
+            "expression": "5.0.0-pre.1",
+            "define": "GLTFAST_DRACO"
+        },
+        {
+            "name": "com.unity.meshopt.decompress",
+            "expression": "",
+            "define": "GLTFAST_MESHOPT"
         }
     ],
     "noEngineReferences": false

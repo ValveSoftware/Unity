@@ -4,25 +4,31 @@ using Valve.OpenXR.Utils;
 public class SteamFrameCheck : MonoBehaviour
 {
     enum CheckState { Unknown, Yes, No }
-    
+
     [SerializeField]
     private GameObject[] _states;
-    
+
     private bool _firstTime = true;
 
     private void Awake()
     {
         SetToggleState(CheckState.Unknown);
     }
-    
+
     private void Update()
     {
         if (_firstTime)
         {
-            if (SystemInfoFeature.IsInitialized())
+            if (ValveOpenXRSystemInfoFeature.IsInitialized())
             {
-                bool isRunningOnFrame = SystemInfoFeature.IsRunnginOnSteamFrame();
-                SetToggleState(isRunningOnFrame ? CheckState.Yes : CheckState.No);
+                if (ValveOpenXRSystemInfoFeature.IsLocalSteamFrame())
+                {
+                    SetToggleState(CheckState.Yes);
+                }
+                else
+                {
+                    SetToggleState(CheckState.No);
+                }
                 _firstTime = false;
             }
         }
@@ -30,7 +36,7 @@ public class SteamFrameCheck : MonoBehaviour
 
     private void SetToggleState(CheckState state)
     {
-        var stateIndex = (int)state;
+        int stateIndex = (int)state;
 
         if (stateIndex < _states.Length)
         {
