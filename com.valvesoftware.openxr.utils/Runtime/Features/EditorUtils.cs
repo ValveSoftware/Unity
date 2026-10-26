@@ -24,7 +24,7 @@ namespace Valve.OpenXR.Utils
             BuildTarget[] targetsThatDefaultToVulkan = {BuildTarget.Android};
             if (!PlayerSettings.GetUseDefaultGraphicsAPIs(buildTarget))
             {
-                GraphicsDeviceType[] apis = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android);
+                GraphicsDeviceType[] apis = PlayerSettings.GetGraphicsAPIs(buildTarget);
                 if (apis.Length >= 1 && apis[0] == GraphicsDeviceType.Vulkan)
                 {
                     return true;

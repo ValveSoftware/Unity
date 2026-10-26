@@ -1,10 +1,10 @@
 {
   "name": "com.valvesoftware.openxr.utils",
   "displayName": "Valve OpenXR Utilities",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "The Valve OpenXR Utilities package provides support for OpenXR projects and their access to Unity's OpenXR functionality.",
   "dependencies": {
-    "com.unity.xr.openxr": "1.10.0",
+    "com.unity.xr.openxr": "1.16.0",
     "com.unity.inputsystem": "1.7.0"
   },
   "keywords": [
@@ -32,7 +32,7 @@
     },
     {
       "displayName": "Render Model",
-      "description": "Retrieves XR controller render models from the OpenXR runtime and display and animates them on screen.",
+      "description": "Displays and animates the controller render models provided by the Render Models feature using Unity's glTFast package.",
       "path": "Samples~/RenderModels"
     }
   ]

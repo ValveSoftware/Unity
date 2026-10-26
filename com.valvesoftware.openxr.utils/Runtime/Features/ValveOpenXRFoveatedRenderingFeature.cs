@@ -50,8 +50,27 @@ namespace Valve.OpenXR.Utils
         private delegate XrResult XrGetFoveationEyeTrackedStateMETADelegate (ulong session, ref XrFoveationEyeTrackedStateMETA foveationState);
 
         private XrGetFoveationEyeTrackedStateMETADelegate _xrGetFoveationEyeTrackedStateMETA;
+        private bool _eyeTrackedStateResolved;
 
+        private ulong _xrInstance;
         private ulong _xrSession;
+
+#if USE_XR_DISPLAY_FOVEATION_API
+        private static readonly List<XRDisplaySubsystem> s_displays = new List<XRDisplaySubsystem>();
+        private static XRDisplaySubsystem GetRunningDisplay()
+        {
+            SubsystemManager.GetSubsystems(s_displays);
+            foreach (XRDisplaySubsystem display in s_displays)
+            {
+                if (display.running)
+                {
+                    return display;
+                }
+            }
+
+            return null;
+        }
+#endif
 
         public float foveatedRenderingLevel
         {
@@ -59,17 +78,11 @@ namespace Valve.OpenXR.Utils
             {
                 float level = 0f;
 
-#if UNITY_OPENXR_1_9_0
 #if USE_XR_DISPLAY_FOVEATION_API
-                List<XRDisplaySubsystem> xrDisplays = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplays);
-                foreach (var display in xrDisplays)
+                XRDisplaySubsystem display = GetRunningDisplay();
+                if (display != null)
                 {
-                    if (display.running)
-                    {
-                        level = display.foveatedRenderingLevel;
-                        break;
-                    }
+                    level = display.foveatedRenderingLevel;
                 }
 #else
                 NativeMethods.FBGetFoveationLevel(out var discreteLevel);
@@ -83,22 +96,15 @@ namespace Valve.OpenXR.Utils
                     default: level = 0f; break;
                 }
 #endif
-#endif
                 return level;
             }
             set
             {
-#if UNITY_OPENXR_1_9_0
 #if USE_XR_DISPLAY_FOVEATION_API
-                List<XRDisplaySubsystem> xrDisplays = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplays);
-                foreach (var display in xrDisplays)
+                XRDisplaySubsystem display = GetRunningDisplay();
+                if (display != null)
                 {
-                    if (display.running)
-                    {
-                        display.foveatedRenderingLevel = value;
-                        break;
-                    }
+                    display.foveatedRenderingLevel = value;
                 }
 #else
                 var level = value switch
@@ -112,7 +118,6 @@ namespace Valve.OpenXR.Utils
                 NativeMethods.FBGetFoveationDynamic(out var dynamic);
                 NativeMethods.FBSetFoveationLevel(_xrSession, level, 0.0f, dynamic);
 #endif
-#endif
             }
         }
 
@@ -121,48 +126,45 @@ namespace Valve.OpenXR.Utils
             get
             {
                 bool isEyeTracked = false;
-#if UNITY_OPENXR_1_9_0
 #if USE_XR_DISPLAY_FOVEATION_API
-                List<XRDisplaySubsystem> xrDisplays = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplays);
-                foreach (var display in xrDisplays)
+                XRDisplaySubsystem display = GetRunningDisplay();
+                if (display != null)
                 {
-                    if (display.running)
-                    {
-                        isEyeTracked = display.foveatedRenderingFlags == XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed;
-                        break;
-                    }
+                    isEyeTracked = display.foveatedRenderingFlags == XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed;
                 }
 #else
                 NativeMethods.MetaGetFoveationEyeTracked(out isEyeTracked);
-#endif
 #endif
                 return isEyeTracked;
             }
             set
             {
-#if UNITY_OPENXR_1_9_0
 #if USE_XR_DISPLAY_FOVEATION_API
-                List<XRDisplaySubsystem> xrDisplays = new List<XRDisplaySubsystem>();
-                SubsystemManager.GetSubsystems(xrDisplays);
-                foreach (var display in xrDisplays)
+                SubsystemManager.GetSubsystems(s_displays);
+                foreach (XRDisplaySubsystem display in s_displays)
                 {
-                    display.foveatedRenderingFlags = value 
+                    display.foveatedRenderingFlags = value
                         ? XRDisplaySubsystem.FoveatedRenderingFlags.GazeAllowed 
                         : XRDisplaySubsystem.FoveatedRenderingFlags.None;
                 }
 #else
                 NativeMethods.MetaSetFoveationEyeTracked(_xrSession, value);
 #endif
-#endif
             }
         }
 
         public bool GetFoveationEyeTrackedCenter(ref Vector2 leftEye, ref Vector2 rightEye)
         {
-            if (_xrGetFoveationEyeTrackedStateMETA == null)
+            if (_xrInstance == 0 || _xrSession == 0)
             {
-                _xrGetFoveationEyeTrackedStateMETA = ValveOpenXRSupportFeature.GetOpenXrInstanceProc<XrGetFoveationEyeTrackedStateMETADelegate>("xrGetFoveationEyeTrackedStateMETA");
+                return false;
+            }
+
+            if (!_eyeTrackedStateResolved)
+            {
+                _eyeTrackedStateResolved = true;
+                ValveOpenXRDelegates.TryGetInstanceProc(xrGetInstanceProcAddr, _xrInstance, "xrGetFoveationEyeTrackedStateMETA",
+                    out _xrGetFoveationEyeTrackedStateMETA);
             }
 
             if (_xrGetFoveationEyeTrackedStateMETA == null)
@@ -170,7 +172,7 @@ namespace Valve.OpenXR.Utils
                 return false;
             }
 
-            XrFoveationEyeTrackedStateMETA eyeTrackedState = new XrFoveationEyeTrackedStateMETA{type = XrStructureType.XR_TYPE_FOVEATION_EYE_TRACKED_STATE_META};
+            XrFoveationEyeTrackedStateMETA eyeTrackedState = new XrFoveationEyeTrackedStateMETA { type = XrStructureType.FoveationEyeTrackedStateMETA };
             XrResult result = _xrGetFoveationEyeTrackedStateMETA(_xrSession, ref eyeTrackedState);
 
             if (result != XrResult.Success || eyeTrackedState.flags != XrFoveationEyeTrackedStateFlagsMETA.XR_FOVEATION_EYE_TRACKED_STATE_VALID_BIT_META)
@@ -178,8 +180,8 @@ namespace Valve.OpenXR.Utils
                 return false;
             }
 
-            leftEye.Set(eyeTrackedState.foveationCenter[0].X, eyeTrackedState.foveationCenter[0].Y);
-            rightEye.Set(eyeTrackedState.foveationCenter[1].X, eyeTrackedState.foveationCenter[1].Y);
+            leftEye.Set(eyeTrackedState.leftFoveationCenter.X, eyeTrackedState.leftFoveationCenter.Y);
+            rightEye.Set(eyeTrackedState.rightFoveationCenter.X, eyeTrackedState.rightFoveationCenter.Y);
             return true;
         }
 
@@ -333,6 +335,19 @@ namespace Valve.OpenXR.Utils
         }
 #endif
 
+        protected override bool OnInstanceCreate(ulong xrInstance)
+        {
+            _xrInstance = xrInstance;
+            return true;
+        }
+
+        protected override void OnInstanceDestroy(ulong xrInstance)
+        {
+            _xrInstance = 0;
+            _xrGetFoveationEyeTrackedStateMETA = null;
+            _eyeTrackedStateResolved = false;
+        }
+
         protected override void OnSessionCreate(ulong xrSession)
         {
             _xrSession = xrSession;
@@ -343,8 +358,8 @@ namespace Valve.OpenXR.Utils
 
         protected override void OnSessionStateChange(int oldState, int newState)
         {
-            if (oldState == (int)XrSessionState.XR_SESSION_STATE_VISIBLE &&
-                newState == (int)XrSessionState.XR_SESSION_STATE_FOCUSED)
+            if (oldState == (int)XrSessionState.Visible &&
+                newState == (int)XrSessionState.Focused)
             {
                 if (applySettingsOnStartup)
                 {
@@ -377,18 +392,19 @@ namespace Valve.OpenXR.Utils
             internal static extern void Internal_SetHasEyeTrackingPermissions([MarshalAs(UnmanagedType.I1)] bool value);
         }
 
+        // foveationCenter[XR_FOVEATION_CENTER_SIZE_META] flattened to avoid array marshalling.
         [StructLayout(LayoutKind.Sequential)]
         private struct XrFoveationEyeTrackedStateMETA
         {
             public XrStructureType type;
             public IntPtr next;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst=2)]
-            public XrVector2f[] foveationCenter;
+            public XrVector2f leftFoveationCenter;
+            public XrVector2f rightFoveationCenter;
             public XrFoveationEyeTrackedStateFlagsMETA flags;
         }
 
         [Flags]
-        private enum XrFoveationEyeTrackedStateFlagsMETA
+        private enum XrFoveationEyeTrackedStateFlagsMETA : ulong   // XrFlags64
         {
             XR_FOVEATION_EYE_TRACKED_STATE_VALID_BIT_META = 0x00000001
         }
@@ -415,20 +431,6 @@ namespace Valve.OpenXR.Utils
             }
         }
 #endif
-    }
-
-    internal enum XrSessionState
-    {
-        XR_SESSION_STATE_UNKNOWN = 0,
-        XR_SESSION_STATE_IDLE = 1,
-        XR_SESSION_STATE_READY = 2,
-        XR_SESSION_STATE_SYNCHRONIZED = 3,
-        XR_SESSION_STATE_VISIBLE = 4,
-        XR_SESSION_STATE_FOCUSED = 5,
-        XR_SESSION_STATE_STOPPING = 6,
-        XR_SESSION_STATE_LOSS_PENDING = 7,
-        XR_SESSION_STATE_EXITING = 8,
-        XR_SESSION_STATE_MAX_ENUM = 0x7FFFFFFF
     }
 
     internal enum FoveatedRenderingLevel
